@@ -1,0 +1,179 @@
+<!--
+/*
+ * roomstore - an irc journaller using cassandra.
+ * Copyright 2011 MeBigFatGuy.com
+ * Copyright 2011 Dave Brosius
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at 
+ * 
+ *    http://www.apache.org/licenses/LICENSE-2.0 
+ *    
+ * Unless required by applicable law or agreed to in writing, 
+ * software distributed under the License is distributed on an "AS IS" BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and limitations 
+ * under the License. 
+ */
+ -->
+
+	<project name="roomstore" default="jar">
+    <property file="build.properties"/>
+
+    <property name="src.dir" value="${basedir}/src"/>
+    <property name="classes.dir" value="${basedir}/classes"/>
+    <property name="lib.dir" value="${basedir}/lib"/>
+    <property name="javadoc.dir" value="${basedir}/javadoc"/>
+    <property name="javac.source" value="1.6"/>
+    <property name="javac.target" value="1.6"/>
+    <property name="javac.deprecation" value="on"/>
+    <property name="javac.debug" value="on"/>
+ 
+	<property name="roomstore.version" value="0.0.1"/>
+
+    <property name="cassandra-thrift.version" value="1.0.6"/>
+	<property name="libthrift.version" value="0.6.1"/>
+    <property name="slf4j-api.version" value="1.6.1"/>
+	<property name="commons-cli.version" value="1.2"/>
+	<property name="pircbot.version" value="1.5.0"/>
+	<property name="cassandra-clientutil.version" value="1.0.6"/>
+		
+    <property name="cassandra-thrift-url" value="http://repo1.maven.org/maven2/org/apache/cassandra/cassandra-thrift/${cassandra-thrift.version}/cassandra-thrift-${cassandra-thrift.version}.jar"/> 
+    <property name="libthrift-url" value="http://repo1.maven.org/maven2/org/apache/thrift/libthrift/${libthrift.version}/libthrift-${libthrift.version}.jar"/> 
+    <property name="slf4j-api-url" value="http://repo1.maven.org/maven2/org/slf4j/slf4j-api/${slf4j-api.version}/slf4j-api-${slf4j-api.version}.jar"/>
+	<property name="commons-cli-url" value="http://repo1.maven.org/maven2/commons-cli/commons-cli/${commons-cli.version}/commons-cli-${commons-cli.version}.jar"/>
+	<property name="pircbot-url" value="http://repo1.maven.org/maven2/pircbot/pircbot/${pircbot.version}/pircbot-${pircbot.version}.jar"/>
+	<property name="cassandra-clientutil-url" value="http://repo1.maven.org/maven2/org/apache/cassandra/cassandra-clientutil/${cassandra-clientutil.version}/cassandra-clientutil-${cassandra-clientutil.version}.jar"/>
+
+    <target name="clean" description="removes all generated collateral">
+        <delete dir="${classes.dir}"/>
+        <delete dir="${javadoc.dir}"/>
+        <delete file="${basedir}/roomstore-${roomstore.version}.jar"/>
+        <delete file="${basedir}/roomstore-src-${roomstore.version}.zip"/>
+    </target>
+
+    <path id="roomstore.classpath">
+        <pathelement location="${lib.dir}/cassandra-thrift-${cassandra-thrift.version}.jar"/>
+        <pathelement location="${lib.dir}/libthrift-${libthrift.version}.jar"/>
+        <pathelement location="${lib.dir}/slf4j-api-${slf4j-api.version}.jar"/>
+        <pathelement location="${lib.dir}/commons-cli-${commons-cli.version}.jar"/>
+        <pathelement location="${lib.dir}/pircbot-${pircbot.version}.jar"/>
+        <pathelement location="${lib.dir}/cassandra-clientutil-${cassandra-clientutil.version}.jar"/>
+    </path>
+    
+    <target name="-init" description="prepares repository for a build">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${javadoc.dir}"/>
+        <mkdir dir="${lib.dir}"/>
+    </target>
+    
+	<target name="cassandra-thrift-check">
+        <available file="${basedir}/lib/cassandra-thrift-${cassandra-thrift.version}.jar" property="cassandra-thrift-exists"/>
+    </target>
+		
+    <target name="libthrift-check">
+        <available file="${basedir}/lib/libthrift-${libthrift.version}.jar" property="libthrift-exists"/>
+    </target>
+
+    <target name="slf4j-api-check">
+        <available file="${basedir}/lib/slf4j-api-${slf4j-api.version}.jar" property="slf4j-api-exists"/>
+    </target>
+		
+    <target name="commons-cli-check">
+        <available file="${basedir}/lib/commons-cli-${commons-cli.version}.jar" property="commons-cli-exists"/>
+    </target>
+		
+    <target name="pircbot-check">
+        <available file="${basedir}/lib/pircbot-${pircbot.version}.jar" property="pircbot-exists"/>
+    </target>
+		
+    <target name="cassandra-clientutil-check">
+        <available file="${basedir}/lib/cassandra-clientutil-${cassandra-clientutil.version}.jar" property="cassandra-clientutil-exists"/>
+    </target>
+
+	<target name="install-cassandra-thrift" depends="cassandra-thrift-check" unless="cassandra-thrift-exists" description="installs cassandra-thrift.jar into lib">
+        <get src="${cassandra-thrift-url}" dest="${basedir}/lib/cassandra-thrift-${cassandra-thrift.version}.jar" verbose="true" ignoreerrors="true"/>
+    </target>
+
+    <target name="install-libthrift" depends="libthrift-check" unless="libthrift-exists" description="installs libthrift.jar into lib">
+        <get src="${libthrift-url}" dest="${basedir}/lib/libthrift-${libthrift.version}.jar" verbose="true" ignoreerrors="true"/>
+    </target>
+
+    <target name="install-slf4j-api" depends="slf4j-api-check" unless="slf4j-api-exists" description="installs slf4j-api.jar into lib">
+        <get src="${slf4j-api-url}" dest="${basedir}/lib/slf4j-api-${slf4j-api.version}.jar" verbose="true" ignoreerrors="true"/>
+    </target>
+
+    <target name="install-commons-cli" depends="commons-cli-check" unless="commons-cli-exists" description="installs commons-cli.jar into lib">
+        <get src="${commons-cli-url}" dest="${basedir}/lib/commons-cli-${commons-cli.version}.jar" verbose="true" ignoreerrors="true"/>
+    </target>
+		
+    <target name="install-pircbot" depends="pircbot-check" unless="pircbot-exists" description="installs pircbot.jar into lib">
+        <get src="${pircbot-url}" dest="${basedir}/lib/pircbot-${pircbot.version}.jar" verbose="true" ignoreerrors="true"/>
+    </target>
+		
+    <target name="install-cassandra-clientutil" depends="cassandra-clientutil-check" unless="cassandra-clientutil-exists" description="installs cassandra-clientutil.jar into lib">
+        <get src="${cassandra-clientutil-url}" dest="${basedir}/lib/cassandra-clientutil-${cassandra-clientutil.version}.jar" verbose="true" ignoreerrors="true"/>
+    </target>
+
+    <target name="pull" depends="install-cassandra-thrift, install-libthrift, install-slf4j-api, install-commons-cli, install-pircbot, install-cassandra-clientutil" description="pull 3rdparty jars to the lib directory"/>
+    
+    <target name="compile" depends="-init, pull" description="compiles java files">
+        <javac  srcdir="${src.dir}"
+                destdir="${classes.dir}"
+                source="${javac.source}"
+                target="${javac.target}"
+                deprecation="${javac.deprecation}"
+                debug="${javac.debug}"
+                includeantruntime="false">
+            <classpath refid="roomstore.classpath"/>
+        </javac>
+    </target>
+
+    <target name="srczip" description="builds the source distribution zip file">
+        <zip destfile="${basedir}/roomstore-src-${roomstore.version}.zip" basedir="${basedir}">
+            <fileset dir="${src.dir}">
+                <include name="**/*.java"/>
+                <include name="**/*.xml"/>
+                <include name="**/*.xsd"/>
+                <include name="**/*.license"/>
+                <include name="**/*.txt"/>
+                <include name="lib/*.jar"/>
+            </fileset>
+        </zip>
+    </target>
+
+    <target name="javadoc" depends="-init" description="build the javadoc for the project">
+        <javadoc packagenames="com.mebigfatguy.*"
+                 sourcepath="${src.dir}"
+                 classpathref="roomstore.classpath"
+                 destdir="${javadoc.dir}"
+                 windowtitle="roomstore api">
+            <doctitle><![CDATA[<h1>roomstore javadoc</h1>]]></doctitle>
+            <bottom><![CDATA[<i>Copyright &#169; 2011-2011 MeBigFatGuy.com. All Rights Reserved.</i>]]></bottom>
+        </javadoc>
+    </target>
+
+    <target name="build" depends="clean, -init, compile" description="compiles the code">
+    </target>
+	
+	<target name="jar" depends="build" description="produces the roomstore jar file">
+        <jar destfile="${basedir}/roomstore-${roomstore.version}.jar">
+            <fileset dir="${classes.dir}">
+                <include name="**/*.class"/>
+            </fileset>
+            <manifest>
+                <attribute name="roomstore-version" value="${roomstore.version}"/>
+                <attribute name="Bundle-ManifestVersion" value="2"/>
+                <attribute name="Bundle-Name" value="roomstore plugin"/>
+                <attribute name="Bundle-SymbolicName" value="roomstore; singleton:=true"/>
+                <attribute name="Bundle-Version" value="${roomstore.version}"/>                
+                <attribute name="Bundle-ClassPath" value="."/>
+                <attribute name="Bundle-Vendor" value="roomstore project"/>
+                <attribute name="Bundle-ActivationPolicy" value="lazy"/>
+            </manifest>
+        </jar>
+	</target>
+
+    <target name="release" depends="build, srczip, javadoc" description="prepares everything for a release"/>
+</project>
