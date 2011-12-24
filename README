@@ -1,0 +1,5 @@
+roomstore - an irc journaller using cassandra
+
+to run, use
+
+java -jar roomstore.jar:cassandra-clientutil.jar:cassandra-thrift.jar:commons-cli.jar:libthrift.jar:pircbot.jar:slf4j-api.jar -nick your_nick -irc_server irc.freenode.net -channels ubuntu cassandra -cassandra_server localhost/9160
