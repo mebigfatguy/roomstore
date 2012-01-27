@@ -33,7 +33,6 @@ import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnDef;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
-import org.apache.cassandra.thrift.ColumnParent;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.IndexType;
 import org.apache.cassandra.thrift.InvalidRequestException;
@@ -61,7 +60,6 @@ public class CassandraWriter {
     private static final ByteBuffer SENDER_BUFFER = toByteBuffer("sender");
     private static final ByteBuffer HOST_BUFFER = toByteBuffer("host");
     private static final ByteBuffer MESSAGE_BUFFER = toByteBuffer("message");
-    private static final ColumnParent PARENT = new ColumnParent(COLUMN_FAMILY_NAME);
 
     
     private TTransport transport;

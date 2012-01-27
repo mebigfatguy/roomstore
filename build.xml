@@ -32,12 +32,12 @@
  
 	<property name="roomstore.version" value="0.0.1"/>
 
-    <property name="cassandra-thrift.version" value="1.0.6"/>
-	<property name="libthrift.version" value="0.6.1"/>
+    <property name="cassandra-thrift.version" value="1.0.7"/>
+	<property name="libthrift.version" value="0.7.0"/>
     <property name="slf4j-api.version" value="1.6.1"/>
 	<property name="commons-cli.version" value="1.2"/>
 	<property name="pircbot.version" value="1.5.0"/>
-	<property name="cassandra-clientutil.version" value="1.0.6"/>
+	<property name="cassandra-clientutil.version" value="1.0.7"/>
 		
     <property name="cassandra-thrift-url" value="http://repo1.maven.org/maven2/org/apache/cassandra/cassandra-thrift/${cassandra-thrift.version}/cassandra-thrift-${cassandra-thrift.version}.jar"/> 
     <property name="libthrift-url" value="http://repo1.maven.org/maven2/org/apache/thrift/libthrift/${libthrift.version}/libthrift-${libthrift.version}.jar"/> 
