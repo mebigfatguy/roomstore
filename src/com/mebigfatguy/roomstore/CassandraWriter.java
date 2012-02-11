@@ -18,23 +18,22 @@
  */
 package com.mebigfatguy.roomstore;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
-import org.apache.cassandra.thrift.ColumnDef;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
+import org.apache.cassandra.thrift.ColumnParent;
 import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.cassandra.thrift.IndexType;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.Mutation;
@@ -42,7 +41,6 @@ import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.thrift.SchemaDisagreementException;
 import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
-import org.apache.cassandra.utils.UUIDGen;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -56,11 +54,6 @@ public class CassandraWriter {
     private static final String KEY_SPACE_NAME = "roomstore";
     private static final String COLUMN_FAMILY_NAME = "messages";
     private static final String STRATEGY_NAME = "SimpleStrategy";
-    private static final ByteBuffer CHANNEL_BUFFER = toByteBuffer("channel");
-    private static final ByteBuffer SENDER_BUFFER = toByteBuffer("sender");
-    private static final ByteBuffer HOST_BUFFER = toByteBuffer("host");
-    private static final ByteBuffer MESSAGE_BUFFER = toByteBuffer("message");
-
     
     private TTransport transport;
     private Cassandra.Client client; 
@@ -75,55 +68,11 @@ public class CassandraWriter {
         client.set_keyspace(KEY_SPACE_NAME);
 
         long timestamp = System.currentTimeMillis();
-
-        UUID uuid = UUIDGen.makeType1UUIDFromHost(InetAddress.getLocalHost());
-        ByteBuffer uuidBuffer = ByteBuffer.wrap(UUIDGen.decompose(uuid));    
         
-        Map<ByteBuffer, Map<String, List<Mutation>>> mutationMap = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
+        ByteBuffer key = generateKey(channel, sender); 
+        Column column = generateColumn(timestamp, hostname, message);
         
-        Column channelColumn = new Column(CHANNEL_BUFFER);
-        channelColumn.setValue(toByteBuffer(channel));
-        channelColumn.setTimestamp(timestamp);
-        addToMutationMap(mutationMap, uuidBuffer, COLUMN_FAMILY_NAME, channelColumn);
-        
-        Column senderColumn = new Column(SENDER_BUFFER);
-        senderColumn.setValue(toByteBuffer(sender));
-        senderColumn.setTimestamp(timestamp);
-        addToMutationMap(mutationMap, uuidBuffer, COLUMN_FAMILY_NAME, senderColumn);
-        
-        Column hostColumn = new Column(HOST_BUFFER);
-        hostColumn.setValue(toByteBuffer(hostname));
-        hostColumn.setTimestamp(timestamp);
-        addToMutationMap(mutationMap, uuidBuffer, COLUMN_FAMILY_NAME, hostColumn);
-        
-        Column messageColumn = new Column(MESSAGE_BUFFER);
-        messageColumn.setValue(toByteBuffer(message));
-        messageColumn.setTimestamp(timestamp);
-        addToMutationMap(mutationMap, uuidBuffer, COLUMN_FAMILY_NAME, messageColumn);
-        
-        client.batch_mutate(mutationMap, ConsistencyLevel.ONE);
-    }
-    
-    private static void addToMutationMap(Map<ByteBuffer,Map<String,List<Mutation>>> mutationMap, ByteBuffer key, String cf, Column c)
-    {
-        Map<String, List<Mutation>> cfMutation = mutationMap.get(key);
-        if (cfMutation == null) {
-            cfMutation = new HashMap<String, List<Mutation>>();
-            mutationMap.put(key, cfMutation);
-        }
-        
-        List<Mutation> mutationList = cfMutation.get(cf);
-        if (mutationList == null) {
-            mutationList = new ArrayList<Mutation>();
-            cfMutation.put(cf,  mutationList);
-        }
-        
-        ColumnOrSuperColumn cc = new ColumnOrSuperColumn();
-        Mutation m = new Mutation();
-
-        cc.setColumn(c);
-        m.setColumn_or_supercolumn(cc);
-        mutationList.add(m);
+        client.insert(key, new ColumnParent(COLUMN_FAMILY_NAME), column, ConsistencyLevel.ONE);
     }
     
     private void setupClient() throws TTransportException {
@@ -139,20 +88,10 @@ public class CassandraWriter {
         } catch (NotFoundException nfe) {
             List<CfDef> columnDefs = new ArrayList<CfDef>();
             CfDef columnFamily = new CfDef(KEY_SPACE_NAME, COLUMN_FAMILY_NAME);
-
-            List<ColumnDef> columnMetaData = new ArrayList<ColumnDef>();
-            ColumnDef channelDef = new ColumnDef(CHANNEL_BUFFER, "UTF8Type");
-            channelDef.setIndex_type(IndexType.KEYS);
-            columnMetaData.add(channelDef);
-            ColumnDef senderDef = new ColumnDef(SENDER_BUFFER, "UTF8Type");
-            senderDef.setIndex_type(IndexType.KEYS);
-            columnMetaData.add(senderDef);
-            ColumnDef hostDef = new ColumnDef(HOST_BUFFER, "UTF8Type");
-            columnMetaData.add(hostDef);
-            ColumnDef messageDef = new ColumnDef(MESSAGE_BUFFER, "UTF8Type");
-            columnMetaData.add(messageDef);
-            columnFamily.setColumn_metadata(columnMetaData);
+            columnFamily.setComparator_type("CompositeType(LongType,UTF8Type)");
+            columnFamily.setDefault_validation_class("UTF8Type");
             columnDefs.add(columnFamily);
+           
             KsDef ksdef = new KsDef(KEY_SPACE_NAME, STRATEGY_NAME, columnDefs);
             Map<String, String> options = new HashMap<String, String>();
             options.put("replication_factor", "1");
@@ -161,12 +100,48 @@ public class CassandraWriter {
         }
     }
     
-    private static ByteBuffer toByteBuffer(String value)
-    {
+    private ByteBuffer generateKey(String channel, String sender) {
         try {
-            return ByteBuffer.wrap(value.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException uee) {
-            throw new Error("UTF-8 not supported", uee);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            baos.write(channel.getBytes("UTF-8"));
+            baos.write((byte) 0);
+            baos.write(sender.getBytes("UTF-8"));
+            return ByteBuffer.wrap(baos.toByteArray());
+        } catch (IOException ioe) {
+            return ByteBuffer.wrap(new byte[0]);
+        }
+    }
+    
+    private Column generateColumn(long timestamp, String hostName, String message) {
+        
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            baos.write((byte)0);
+            baos.write((byte)8);
+            
+            long ts = timestamp;
+            byte[] longBytes = new byte[8];
+            for (int i = 0; i < 8; i++) {
+                longBytes[7 - i] = (byte)(ts & 0xFF);
+                ts >>>= 8;
+            }
+            baos.write(longBytes);
+            baos.write((byte) 0);
+            
+            int mLen = hostName.length();
+            baos.write((byte) ((mLen >> 8) & 0xFF));
+            baos.write((byte) ((mLen & 0xFF)));
+            baos.write(hostName.getBytes("UTF-8"));
+            baos.write((byte) 0);
+            
+            Column c = new Column(ByteBuffer.wrap(baos.toByteArray()));
+            c.setValue(message.getBytes("UTF-8"));
+            c.setTimestamp(timestamp);
+            c.setTtl(365 * 24 * 60 * 60);
+            
+            return c;
+        } catch (IOException ioe) {
+            return new Column();
         }
     }
 }
