@@ -103,9 +103,9 @@ public class CassandraWriter {
     private ByteBuffer generateKey(String channel, String sender) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            baos.write(channel.getBytes("UTF-8"));
+            baos.write(channel.toLowerCase().getBytes("UTF-8"));
             baos.write((byte) 0);
-            baos.write(sender.getBytes("UTF-8"));
+            baos.write(sender.toLowerCase().getBytes("UTF-8"));
             return ByteBuffer.wrap(baos.toByteArray());
         } catch (IOException ioe) {
             return ByteBuffer.wrap(new byte[0]);
@@ -131,7 +131,7 @@ public class CassandraWriter {
             int mLen = hostName.length();
             baos.write((byte) ((mLen >> 8) & 0xFF));
             baos.write((byte) ((mLen & 0xFF)));
-            baos.write(hostName.getBytes("UTF-8"));
+            baos.write(hostName.toLowerCase().getBytes("UTF-8"));
             baos.write((byte) 0);
             
             Column c = new Column(ByteBuffer.wrap(baos.toByteArray()));
