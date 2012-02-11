@@ -19,6 +19,7 @@
 package com.mebigfatguy.roomstore;
 
 import java.io.IOException;
+import java.text.DateFormat;
 
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
@@ -73,6 +74,17 @@ public class IRCConnector {
         public void onMessage(String channel, String sender, String login, String hostname, String message) {
             try {
                 writer.addMessage(channel, sender, hostname, message);
+                String[] msgParts = message.split("\\s+");
+                if (msgParts.length == 2) {
+                    if ("seen".equalsIgnoreCase(msgParts[0])) {
+                        String user = msgParts[1].trim();
+                        Message msg = writer.getLastMessage(channel,  user);
+                        if (msg != null) {        
+                            this.sendMessage(channel,  sender + ": " + user + " last seen " + DateFormat.getInstance().format(msg.getTime()) + " saying: " + msg.getMessage());
+                        }
+                    }
+                }
+                
             } catch (Exception e) {
                 e.printStackTrace();
             }

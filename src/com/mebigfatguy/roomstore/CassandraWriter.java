@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +37,10 @@ import org.apache.cassandra.thrift.ColumnParent;
 import org.apache.cassandra.thrift.ConsistencyLevel;
 import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.KsDef;
-import org.apache.cassandra.thrift.Mutation;
 import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.thrift.SchemaDisagreementException;
+import org.apache.cassandra.thrift.SlicePredicate;
+import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.thrift.TimedOutException;
 import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.thrift.TException;
@@ -54,6 +56,7 @@ public class CassandraWriter {
     private static final String KEY_SPACE_NAME = "roomstore";
     private static final String COLUMN_FAMILY_NAME = "messages";
     private static final String STRATEGY_NAME = "SimpleStrategy";
+    private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(new byte[0]);
     
     private TTransport transport;
     private Cassandra.Client client; 
@@ -73,6 +76,27 @@ public class CassandraWriter {
         Column column = generateColumn(timestamp, hostname, message);
         
         client.insert(key, new ColumnParent(COLUMN_FAMILY_NAME), column, ConsistencyLevel.ONE);
+    }
+    
+    public Message getLastMessage(String channel, String sender) throws TException, UnknownHostException, InvalidRequestException, TimedOutException, UnavailableException {
+        
+        try {
+            ByteBuffer key = generateKey(channel, sender); 
+            ColumnParent parent = new ColumnParent(COLUMN_FAMILY_NAME);
+            SlicePredicate slice = new SlicePredicate();
+            SliceRange range = new SliceRange(EMPTY_BUFFER, EMPTY_BUFFER, true, 1);
+            slice.setSlice_range(range);
+            List<ColumnOrSuperColumn> columns = client.get_slice(key, parent, slice, ConsistencyLevel.ONE);
+            if (columns.size() == 0) {
+                return null;
+            }
+            
+            Column c = columns.get(0).column;
+            
+            return new Message(channel, sender, new Date(c.getTimestamp()), new String(c.getValue(), "UTF-8"));
+        } catch (UnsupportedEncodingException uee) {
+            return null;
+        }
     }
     
     private void setupClient() throws TTransportException {
