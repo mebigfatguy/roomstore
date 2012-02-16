@@ -89,5 +89,35 @@ public class IRCConnector {
                 e.printStackTrace();
             }
         }
+
+        @Override
+        protected void onDisconnect() {
+            Thread t = new Thread(new Runnable() {
+                public void run() {
+                    long sleepTime = 2000;
+                    while (!Thread.interrupted()) {
+                        try {
+                            Thread.sleep(sleepTime);
+                            sleepTime *= 1.5;
+                            if (sleepTime > 60000) {
+                                sleepTime = 60000;
+                            }
+                            
+                            casBot.connect(server);
+                            for (String channel : channels) {
+                                if (!channel.startsWith("#")) {
+                                    channel = '#' + channel;
+                                }
+                                casBot.joinChannel(channel);
+                            }
+                            return;
+                        } catch (Exception e) {
+                        } 
+                    }
+                }
+            });
+            t.start();
+        }
+        
     }
 }
