@@ -112,6 +112,7 @@ public class CassandraWriter {
         } catch (NotFoundException nfe) {
             List<CfDef> columnDefs = new ArrayList<CfDef>();
             CfDef columnFamily = new CfDef(KEY_SPACE_NAME, COLUMN_FAMILY_NAME);
+            columnFamily.setKey_validation_class("CompositeType(UTF8Type,UTF8Type)");
             columnFamily.setComparator_type("CompositeType(LongType,UTF8Type)");
             columnFamily.setDefault_validation_class("UTF8Type");
             columnDefs.add(columnFamily);
@@ -127,12 +128,22 @@ public class CassandraWriter {
     private ByteBuffer generateKey(String channel, String sender) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            baos.write(channel.toLowerCase().getBytes("UTF-8"));
+            
+            int len = sender.length();
+            baos.write((byte) ((len >> 8) & 0xFF));
+            baos.write((byte) ((len & 0xFF)));
+            baos.write(sender.getBytes("UTF-8"));
             baos.write((byte) 0);
-            baos.write(sender.toLowerCase().getBytes("UTF-8"));
+            
+            len = sender.length();
+            baos.write((byte) ((len >> 8) & 0xFF));
+            baos.write((byte) ((len & 0xFF)));
+            baos.write(sender.getBytes("UTF-8"));
+            baos.write((byte) 0);
+            
             return ByteBuffer.wrap(baos.toByteArray());
-        } catch (IOException ioe) {
-            return ByteBuffer.wrap(new byte[0]);
+        } catch (Exception e) {
+            throw new Error("Bad Error trying to generate key", e);
         }
     }
     
