@@ -129,10 +129,10 @@ public class CassandraWriter {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             
-            int len = sender.length();
+            int len = channel.length();
             baos.write((byte) ((len >> 8) & 0xFF));
             baos.write((byte) ((len & 0xFF)));
-            baos.write(sender.getBytes("UTF-8"));
+            baos.write(channel.getBytes("UTF-8"));
             baos.write((byte) 0);
             
             len = sender.length();
