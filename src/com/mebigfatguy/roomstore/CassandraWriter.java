@@ -115,6 +115,7 @@ public class CassandraWriter {
             columnFamily.setKey_validation_class("CompositeType(UTF8Type,UTF8Type)");
             columnFamily.setComparator_type("CompositeType(LongType,UTF8Type)");
             columnFamily.setDefault_validation_class("UTF8Type");
+            columnFamily.setCompaction_strategy("LeveledCompactionStrategy");
             columnDefs.add(columnFamily);
            
             KsDef ksdef = new KsDef(KEY_SPACE_NAME, STRATEGY_NAME, columnDefs);
