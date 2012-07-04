@@ -3,10 +3,10 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/pircbot-1.5.0.jar"/>
-	<classpathentry kind="lib" path="lib/slf4j-api-1.6.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/cassandra-clientutil-1.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/cassandra-thrift-1.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/libthrift-0.7.0.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.6.6.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
