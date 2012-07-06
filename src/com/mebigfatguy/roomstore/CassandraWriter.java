@@ -1,6 +1,6 @@
 /*
  * roomstore - an irc journaller using cassandra.
- * 
+ *
  * Copyright 2011 MeBigFatGuy.com
  * Copyright 2011 Dave Brosius
  *
@@ -21,7 +21,6 @@ package com.mebigfatguy.roomstore;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,47 +40,65 @@ import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.thrift.SchemaDisagreementException;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
-import org.apache.cassandra.thrift.TimedOutException;
-import org.apache.cassandra.thrift.UnavailableException;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CassandraWriter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraWriter.class);
 
     private static final String KEY_SPACE_NAME = "roomstore";
     private static final String COLUMN_FAMILY_NAME = "messages";
     private static final String STRATEGY_NAME = "SimpleStrategy";
     private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(new byte[0]);
-    
+
     private TTransport transport;
-    private Cassandra.Client client; 
-    
-    public CassandraWriter(String cassandraServer) throws TTransportException, TException, InvalidRequestException, SchemaDisagreementException {
+    private Cassandra.Client client;
+    private String server;
+    private int port;
+
+    public CassandraWriter(String cassandraServer) throws Exception {
+        String[] parts = cassandraServer.split("/");
+        if (parts.length > 0) {
+            server = parts[0];
+        }
+        if (parts.length > 1) {
+            port = Integer.parseInt(parts[1]);
+        } else
+            port = 9160;
+
         setupClient();
         setupKeyspace();
     }
 
-    public void addMessage(String channel, String sender, String hostname, String message) throws TException, UnknownHostException, InvalidRequestException, TimedOutException, UnavailableException {
-        
-        client.set_keyspace(KEY_SPACE_NAME);
+    public void addMessage(String channel, String sender, String hostname, String message) throws Exception {
 
-        long timestamp = System.currentTimeMillis();
-        
-        ByteBuffer key = generateKey(channel, sender); 
-        Column column = generateColumn(timestamp, hostname, message);
-        
-        client.insert(key, new ColumnParent(COLUMN_FAMILY_NAME), column, ConsistencyLevel.ONE);
-    }
-    
-    public Message getLastMessage(String channel, String sender) throws TException, UnknownHostException, InvalidRequestException, TimedOutException, UnavailableException {
-        
         try {
-            ByteBuffer key = generateKey(channel, sender); 
+            client.set_keyspace(KEY_SPACE_NAME);
+
+            long timestamp = System.currentTimeMillis();
+
+            ByteBuffer key = generateKey(channel, sender);
+            Column column = generateColumn(timestamp, hostname, message);
+
+            client.insert(key, new ColumnParent(COLUMN_FAMILY_NAME), column, ConsistencyLevel.ONE);
+        } catch (Exception e) {
+            tearDownClient();
+            setupClient();
+            throw e;
+        }
+    }
+
+    public Message getLastMessage(String channel, String sender) throws Exception {
+
+        try {
+            ByteBuffer key = generateKey(channel, sender);
             ColumnParent parent = new ColumnParent(COLUMN_FAMILY_NAME);
             SlicePredicate slice = new SlicePredicate();
             SliceRange range = new SliceRange(EMPTY_BUFFER, EMPTY_BUFFER, true, 1);
@@ -90,22 +107,51 @@ public class CassandraWriter {
             if (columns.size() == 0) {
                 return null;
             }
-            
+
             Column c = columns.get(0).column;
-            
+
             return new Message(channel, sender, new Date(c.getTimestamp()), new String(c.getValue(), "UTF-8"));
         } catch (UnsupportedEncodingException uee) {
             return null;
+        } catch (Exception e) {
+            tearDownClient();
+            setupClient();
+            throw e;
         }
     }
-    
-    private void setupClient() throws TTransportException {
-        transport = new TFramedTransport(new TSocket("localhost", 9160));
-        TProtocol proto = new TBinaryProtocol(transport);
-        client = new Cassandra.Client(proto);
-        transport.open();
+
+    private void setupClient() throws Exception {
+        long delay = 1000;
+        while (client == null) {
+            try {
+                LOGGER.info("Attempting to connect to " + server + "/" + port);
+                transport = new TFramedTransport(new TSocket(server, port));
+                TProtocol proto = new TBinaryProtocol(transport);
+                client = new Cassandra.Client(proto);
+                transport.open();
+            } catch (Exception e) {
+                tearDownClient();
+                Thread.sleep(delay);
+                delay *= 2;
+                if (delay > 30000) {
+                    delay = 30000;
+                }
+            }
+        }
     }
-    
+
+    private void tearDownClient() {
+        try {
+            if (transport != null) {
+                transport.close();
+            }
+        } catch (Exception e) {
+        } finally {
+            transport = null;
+            client = null;
+        }
+    }
+
     private void setupKeyspace() throws TException, InvalidRequestException, SchemaDisagreementException {
         try {
             client.describe_keyspace(KEY_SPACE_NAME);
@@ -117,7 +163,7 @@ public class CassandraWriter {
             columnFamily.setDefault_validation_class("UTF8Type");
             columnFamily.setCompaction_strategy("LeveledCompactionStrategy");
             columnDefs.add(columnFamily);
-           
+
             KsDef ksdef = new KsDef(KEY_SPACE_NAME, STRATEGY_NAME, columnDefs);
             Map<String, String> options = new HashMap<String, String>();
             options.put("replication_factor", "1");
@@ -125,36 +171,36 @@ public class CassandraWriter {
             client.system_add_keyspace(ksdef);
         }
     }
-    
+
     private ByteBuffer generateKey(String channel, String sender) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            
+
             int len = channel.length();
             baos.write((byte) ((len >> 8) & 0xFF));
             baos.write((byte) ((len & 0xFF)));
             baos.write(channel.getBytes("UTF-8"));
             baos.write((byte) 0);
-            
+
             len = sender.length();
             baos.write((byte) ((len >> 8) & 0xFF));
             baos.write((byte) ((len & 0xFF)));
             baos.write(sender.getBytes("UTF-8"));
             baos.write((byte) 0);
-            
+
             return ByteBuffer.wrap(baos.toByteArray());
         } catch (Exception e) {
             throw new Error("Bad Error trying to generate key", e);
         }
     }
-    
+
     private Column generateColumn(long timestamp, String hostName, String message) {
-        
+
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             baos.write((byte)0);
             baos.write((byte)8);
-            
+
             long ts = timestamp;
             byte[] longBytes = new byte[8];
             for (int i = 0; i < 8; i++) {
@@ -163,18 +209,18 @@ public class CassandraWriter {
             }
             baos.write(longBytes);
             baos.write((byte) 0);
-            
+
             int mLen = hostName.length();
             baos.write((byte) ((mLen >> 8) & 0xFF));
             baos.write((byte) ((mLen & 0xFF)));
             baos.write(hostName.toLowerCase().getBytes("UTF-8"));
             baos.write((byte) 0);
-            
+
             Column c = new Column(ByteBuffer.wrap(baos.toByteArray()));
             c.setValue(message.getBytes("UTF-8"));
             c.setTimestamp(timestamp);
             c.setTtl(365 * 24 * 60 * 60);
-            
+
             return c;
         } catch (IOException ioe) {
             return new Column();
