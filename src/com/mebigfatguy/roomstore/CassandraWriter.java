@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.cassandra.thrift.Cassandra;
+import org.apache.cassandra.thrift.Cassandra.Client;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.Column;
 import org.apache.cassandra.thrift.ColumnOrSuperColumn;
@@ -45,41 +46,31 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CassandraWriter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CassandraWriter.class);
+    private static final long DEFAULT_LEASE = 10*1000;
 
     private static final String KEY_SPACE_NAME = "roomstore";
     private static final String COLUMN_FAMILY_NAME = "messages";
     private static final String STRATEGY_NAME = "SimpleStrategy";
     private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(new byte[0]);
 
-    private TTransport transport;
-    private Cassandra.Client client;
-    private String server;
-    private int port;
+    private ConnectionPool pool;
 
-    public CassandraWriter(String cassandraServer) throws Exception {
-        String[] parts = cassandraServer.split("/");
-        if (parts.length > 0) {
-            server = parts[0];
-        }
-        if (parts.length > 1) {
-            port = Integer.parseInt(parts[1]);
-        } else
-            port = 9160;
-
-        setupClient();
+    public CassandraWriter(ConnectionPool serverPool) throws Exception {
+        pool = serverPool;
         setupKeyspace();
     }
 
     public void addMessage(String channel, String sender, String hostname, String message) throws Exception {
 
+        Client client = null;
         try {
+            client = pool.lease(DEFAULT_LEASE, null);
             client.set_keyspace(KEY_SPACE_NAME);
 
             long timestamp = System.currentTimeMillis();
@@ -88,16 +79,17 @@ public class CassandraWriter {
             Column column = generateColumn(timestamp, hostname, message);
 
             client.insert(key, new ColumnParent(COLUMN_FAMILY_NAME), column, ConsistencyLevel.ONE);
-        } catch (Exception e) {
-            tearDownClient();
-            setupClient();
-            throw e;
+        } finally {
+            pool.recycle(client);
         }
     }
 
     public Message getLastMessage(String channel, String sender) throws Exception {
 
+        Client client = null;
         try {
+            client = pool.lease(DEFAULT_LEASE, null);
+
             ByteBuffer key = generateKey(channel, sender);
             ColumnParent parent = new ColumnParent(COLUMN_FAMILY_NAME);
             SlicePredicate slice = new SlicePredicate();
@@ -113,47 +105,15 @@ public class CassandraWriter {
             return new Message(channel, sender, new Date(c.getTimestamp()), new String(c.getValue(), "UTF-8"));
         } catch (UnsupportedEncodingException uee) {
             return null;
-        } catch (Exception e) {
-            tearDownClient();
-            setupClient();
-            throw e;
-        }
-    }
-
-    private void setupClient() throws Exception {
-        long delay = 1000;
-        while (client == null) {
-            try {
-                LOGGER.info("Attempting to connect to " + server + "/" + port);
-                transport = new TFramedTransport(new TSocket(server, port));
-                TProtocol proto = new TBinaryProtocol(transport);
-                client = new Cassandra.Client(proto);
-                transport.open();
-            } catch (Exception e) {
-                tearDownClient();
-                Thread.sleep(delay);
-                delay *= 2;
-                if (delay > 30000) {
-                    delay = 30000;
-                }
-            }
-        }
-    }
-
-    private void tearDownClient() {
-        try {
-            if (transport != null) {
-                transport.close();
-            }
-        } catch (Exception e) {
         } finally {
-            transport = null;
-            client = null;
+            pool.recycle(client);
         }
     }
 
-    private void setupKeyspace() throws TException, InvalidRequestException, SchemaDisagreementException {
+    private void setupKeyspace() throws Exception {
+        Client client = null;
         try {
+            client = pool.lease(DEFAULT_LEASE, null);
             client.describe_keyspace(KEY_SPACE_NAME);
         } catch (NotFoundException nfe) {
             List<CfDef> columnDefs = new ArrayList<CfDef>();
@@ -169,6 +129,8 @@ public class CassandraWriter {
             options.put("replication_factor", "1");
             ksdef.setStrategy_options(options);
             client.system_add_keyspace(ksdef);
+        } finally {
+            pool.recycle(client);
         }
     }
 

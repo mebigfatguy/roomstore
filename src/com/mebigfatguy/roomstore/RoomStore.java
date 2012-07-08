@@ -45,11 +45,17 @@ public class RoomStore {
 
             IRCConnector connector = new IRCConnector(nickname, server, channels);
 
-            String cassandraServer = cmdLine.getOptionValue(CASANDRASERVER);
-            CassandraWriter writer = new CassandraWriter(cassandraServer);
+            final ConnectionPool pool = new ConnectionPool(cmdLine.getOptionValues(CASANDRASERVER));
+            CassandraWriter writer = new CassandraWriter(pool);
             connector.setWriter(writer);
 
             connector.startRecording();
+
+            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                public void run() {
+                    pool.terminate();
+                }
+            }));
 
         } catch (ParseException pe) {
             HelpFormatter formatter = new HelpFormatter();
@@ -75,8 +81,9 @@ public class RoomStore {
         option.setArgs(100);
         options.addOption(option);
 
-        option = new Option(CASANDRASERVER, true, "server/port of cassandra server");
+        option = new Option(CASANDRASERVER, true, "space separated list of server/port of cassandra server");
         option.setRequired(true);
+        option.setArgs(100);
         options.addOption(option);
 
         return options;

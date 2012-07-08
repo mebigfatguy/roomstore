@@ -55,13 +55,14 @@ public final class ConnectionPool {
 
         retryFailedServers();
 
-        if (inUseClients.isEmpty()) {
+        if (freeClients.isEmpty()) {
             throw new Exception("Failed connecting to any servers: " + Arrays.toString(servers));
         }
 
         maintenanceThread = new Thread(new MaintenanceJob());
         maintenanceThread.setName("CP-MAINTENANCE");
         maintenanceThread.setPriority(Thread.MIN_PRIORITY);
+        maintenanceThread.setDaemon(true);
         maintenanceThread.start();
     }
 
@@ -85,6 +86,7 @@ public final class ConnectionPool {
     public Client lease(long leaseTimeout, LeaseListener listener) throws InterruptedException {
         assert (leaseTimeout > 0) : "Lease timeout must be positive";
 
+        Client client = null;
         LeaseDetails details = new LeaseDetails();
         synchronized(activeLock) {
             while (freeClients.size() == 0) {
@@ -93,6 +95,7 @@ public final class ConnectionPool {
             Iterator<Map.Entry<String, Client>> it = freeClients.entrySet().iterator();
             Map.Entry<String, Client> entry = it.next();
             details.server = entry.getKey();
+            client = entry.getValue();
             details.leaseEndTime = System.currentTimeMillis() + leaseTimeout;
             details.listener = listener;
 
@@ -101,10 +104,14 @@ public final class ConnectionPool {
         }
 
 
-        return null;
+        return client;
     }
 
     public void recycle(Client client) {
+        if (client == null) {
+            return;
+        }
+
         synchronized(activeLock) {
             LeaseDetails details = inUseClients.remove(client);
             if (details != null) {
