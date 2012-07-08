@@ -1,8 +1,8 @@
 /*
  * roomstore - an irc journaller using cassandra.
- * 
- * Copyright 2011 MeBigFatGuy.com
- * Copyright 2011 Dave Brosius
+ *
+ * Copyright 2011-2012 MeBigFatGuy.com
+ * Copyright 2011-2012 Dave Brosius
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ public class IRCConnector {
     private CasBot casBot;
     private String server;
     private String[] channels;
-    
-    public IRCConnector(String nickName, String ircServer, String[] ircChannels) {  
+
+    public IRCConnector(String nickName, String ircServer, String[] ircChannels) {
         casBot = new CasBot(nickName);
         server = ircServer;
         channels = ircChannels;
@@ -59,18 +59,18 @@ public class IRCConnector {
                 name += String.valueOf((int) (Math.random() * 10));
                 casBot.rename(name);
             }
-        }     
+        }
     }
-    
+
     private class CasBot extends PircBot {
         public CasBot(String nick) {
             setName(nick);
         }
-        
+
         public void rename(String nick) {
             super.setName(nick);
         }
-        
+
         public void onMessage(String channel, String sender, String login, String hostname, String message) {
             try {
                 writer.addMessage(channel, sender, hostname, message);
@@ -79,12 +79,12 @@ public class IRCConnector {
                     if ("seen".equalsIgnoreCase(msgParts[0])) {
                         String user = msgParts[1].trim();
                         Message msg = writer.getLastMessage(channel,  user);
-                        if (msg != null) {        
+                        if (msg != null) {
                             this.sendMessage(channel,  sender + ": " + user + " last seen " + DateFormat.getInstance().format(msg.getTime()) + " saying: " + msg.getMessage());
                         }
                     }
                 }
-                
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -102,7 +102,7 @@ public class IRCConnector {
                             if (sleepTime > 60000) {
                                 sleepTime = 60000;
                             }
-                            
+
                             casBot.connect(server);
                             for (String channel : channels) {
                                 if (!channel.startsWith("#")) {
@@ -112,12 +112,12 @@ public class IRCConnector {
                             }
                             return;
                         } catch (Exception e) {
-                        } 
+                        }
                     }
                 }
             });
             t.start();
         }
-        
+
     }
 }

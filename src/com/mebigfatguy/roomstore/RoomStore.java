@@ -1,8 +1,8 @@
 /*
  * roomstore - an irc journaller using cassandra.
- * 
- * Copyright 2011 MeBigFatGuy.com
- * Copyright 2011 Dave Brosius
+ *
+ * Copyright 2011-2012 MeBigFatGuy.com
+ * Copyright 2011-2012 Dave Brosius
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,25 +32,25 @@ public class RoomStore {
     private static final String IRCSERVER = "irc_server";
     private static final String CHANNELS = "channels";
     private static final String CASANDRASERVER = "cassandra_server";
-    
+
     public static void main(String[] args) {
         Options options = createOptions();
-        
+
         try {
             CommandLineParser parser = new GnuParser();
             CommandLine cmdLine = parser.parse(options, args);
             String nickname = cmdLine.getOptionValue(NICK_NAME);
             String server = cmdLine.getOptionValue(IRCSERVER);
             String[] channels = cmdLine.getOptionValues(CHANNELS);
-            
+
             IRCConnector connector = new IRCConnector(nickname, server, channels);
-            
+
             String cassandraServer = cmdLine.getOptionValue(CASANDRASERVER);
             CassandraWriter writer = new CassandraWriter(cassandraServer);
             connector.setWriter(writer);
-            
+
             connector.startRecording();
-            
+
         } catch (ParseException pe) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp( "roomstore", options );
@@ -58,27 +58,27 @@ public class RoomStore {
             e.printStackTrace();
         }
     }
-    
+
     private static Options createOptions() {
         Options options = new Options();
-        
+
         Option option = new Option(NICK_NAME, true, "nickname to use to access irc channels");
         option.setRequired(true);
         options.addOption(option);
-        
+
         option = new Option(IRCSERVER, true, "irc server url");
         option.setRequired(true);
         options.addOption(option);
-        
-        option = new Option(CHANNELS, true, "space separated list of channels to connect to");  
+
+        option = new Option(CHANNELS, true, "space separated list of channels to connect to");
         option.setRequired(true);
         option.setArgs(100);
         options.addOption(option);
-        
-        option = new Option(CASANDRASERVER, true, "server/port of cassandra server");   
+
+        option = new Option(CASANDRASERVER, true, "server/port of cassandra server");
         option.setRequired(true);
         options.addOption(option);
-        
+
         return options;
     }
 }
