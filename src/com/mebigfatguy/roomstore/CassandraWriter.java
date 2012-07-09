@@ -69,6 +69,7 @@ public class CassandraWriter {
     public void addMessage(String channel, String sender, String hostname, String message) throws Exception {
 
         Client client = null;
+        boolean suspect = false;
         try {
             client = pool.lease(DEFAULT_LEASE, null);
             client.set_keyspace(KEY_SPACE_NAME);
@@ -79,14 +80,18 @@ public class CassandraWriter {
             Column column = generateColumn(timestamp, hostname, message);
 
             client.insert(key, new ColumnParent(COLUMN_FAMILY_NAME), column, ConsistencyLevel.ONE);
+        } catch (Exception e) {
+            suspect = true;
+            throw e;
         } finally {
-            pool.recycle(client);
+            pool.recycle(client, suspect);
         }
     }
 
     public Message getLastMessage(String channel, String sender) throws Exception {
 
         Client client = null;
+        boolean suspect = false;
         try {
             client = pool.lease(DEFAULT_LEASE, null);
 
@@ -103,15 +108,17 @@ public class CassandraWriter {
             Column c = columns.get(0).column;
 
             return new Message(channel, sender, new Date(c.getTimestamp()), new String(c.getValue(), "UTF-8"));
-        } catch (UnsupportedEncodingException uee) {
-            return null;
+        } catch (Exception e) {
+            suspect = true;
+            throw e;
         } finally {
-            pool.recycle(client);
+            pool.recycle(client, suspect);
         }
     }
 
     private void setupKeyspace() throws Exception {
         Client client = null;
+        boolean suspect = false;
         try {
             client = pool.lease(DEFAULT_LEASE, null);
             client.describe_keyspace(KEY_SPACE_NAME);
@@ -129,8 +136,11 @@ public class CassandraWriter {
             options.put("replication_factor", "1");
             ksdef.setStrategy_options(options);
             client.system_add_keyspace(ksdef);
+        } catch (Exception e) {
+            suspect = true;
+            throw e;
         } finally {
-            pool.recycle(client);
+            pool.recycle(client, suspect);
         }
     }
 

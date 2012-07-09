@@ -107,16 +107,29 @@ public final class ConnectionPool {
         return client;
     }
 
-    public void recycle(Client client) {
+    public void recycle(Client client, boolean seemsSuspect) {
         if (client == null) {
             return;
         }
 
+        LeaseDetails details = null;
         synchronized(activeLock) {
-            LeaseDetails details = inUseClients.remove(client);
-            if (details != null) {
-                freeClients.put(details.server, client);
-                activeLock.notifyAll();
+            details = inUseClients.remove(client);
+            if (!seemsSuspect) {
+                if (details != null) {
+                    freeClients.put(details.server, client);
+                    activeLock.notifyAll();
+                }
+            }
+        }
+
+        if (seemsSuspect && (details != null)) {
+            synchronized(failLock) {
+                TTransport transport = transports.get(details.server);
+                if (transport != null) {
+                    transport.close();
+                }
+                failedServers.put(details.server, Integer.valueOf(1));
             }
         }
     }
