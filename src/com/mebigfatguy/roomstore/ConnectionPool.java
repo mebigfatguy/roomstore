@@ -159,6 +159,7 @@ public final class ConnectionPool {
                     }
 
                 } catch (Exception e) {
+                    entry.setValue(Integer.valueOf(entry.getValue().intValue() + 1));
                     LOGGER.error("Failed creating connection to: " + server + ". This is the " + entry.getValue() + " time in a row", e);
                 }
             }
