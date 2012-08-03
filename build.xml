@@ -150,4 +150,27 @@
 
 	<target name="release" depends="build, srczip, javadoc"
 		description="prepares everything for a release" />
+
+	<target name="run" depends="jar" description="run roomstore against irc.freenode.net's #cassandra, #cassandra-dev">
+		<java classname="com.mebigfatguy.roomstore.RoomStore" fork="true" maxmemory="256m">
+			<arg value="-cassandra_server"/>
+			<arg value="localhost/9160"/>
+			<arg value="-channels"/>
+			<arg value="#cassandra"/>
+			<arg value="#cassandra-dev"/>
+			<arg value="-irc_server"/>
+			<arg value="irc.freenode.net"/>
+			<arg value="-nick"/>
+			<arg value="casasa"/>
+			<classpath>
+				<pathelement location="${basedir}/roomstore-${roomstore.version}.jar"/>
+				<pathelement location="${lib.dir}/commons-cli-${commons-cli.version}.jar"/>
+				<pathelement location="${lib.dir}/cassandra-thrift-${cassandra-thrift.version}.jar" />
+				<pathelement location="${lib.dir}/libthrift-${libthrift.version}.jar" />
+				<pathelement location="${lib.dir}/slf4j-api-${slf4j-api.version}.jar" />
+				<pathelement location="${lib.dir}/pircbot-${pircbot.version}.jar" />
+				<pathelement location="${lib.dir}/cassandra-clientutil-${cassandra-clientutil.version}.jar" />
+			</classpath>
+		</java>
+ 	</target>
 </project>

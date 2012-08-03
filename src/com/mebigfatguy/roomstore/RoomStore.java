@@ -18,6 +18,8 @@
  */
 package com.mebigfatguy.roomstore;
 
+import java.util.Arrays;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -58,6 +60,8 @@ public class RoomStore {
             }));
 
         } catch (ParseException pe) {
+	    System.out.println("Parse Error on command line options:");
+	    System.out.println(commandLineRepresentation(args));
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp( "roomstore", options );
         } catch (Exception e) {
@@ -87,5 +91,17 @@ public class RoomStore {
         options.addOption(option);
 
         return options;
+    }
+
+    private static String commandLineRepresentation(String[] args) {
+        StringBuilder sb = new StringBuilder();
+        String space = "Roomstore ";
+        for (String arg : args) {
+            sb.append(space);
+            space = " ";
+            sb.append(arg);
+        }
+        
+        return sb.toString();
     }
 }
