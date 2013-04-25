@@ -20,6 +20,10 @@ package com.mebigfatguy.roomstore;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
@@ -65,6 +69,9 @@ public class IRCConnector {
     private class CasBot extends PircBot {
         public CasBot(String nick) {
             setName(nick);
+            setLogin(nick);
+            setFinger(nick);
+            setVersion(nick);
         }
 
         public void rename(String nick) {
@@ -75,12 +82,33 @@ public class IRCConnector {
             try {
                 writer.addMessage(channel, sender, hostname, message);
                 String[] msgParts = message.split("\\s+");
-                if (msgParts.length == 2) {
-                    if ("seen".equalsIgnoreCase(msgParts[0])) {
-                        String user = msgParts[1].trim();
-                        Message msg = writer.getLastMessage(channel,  user);
-                        if (msg != null) {
-                            this.sendMessage(channel,  sender + ": " + user + " last seen " + DateFormat.getInstance().format(msg.getTime()) + " saying: " + msg.getMessage());
+                if (msgParts.length >= 2) {
+                    if ("~".equals(msgParts[0])) {
+                        if ((msgParts.length >= 3) && "seen".equalsIgnoreCase(msgParts[1])) {
+                            String user = msgParts[2].trim();
+                            Message msg = writer.getLastMessage(channel,  user);
+                            if (msg != null) {
+                                sendMessage(sender,  user + " last seen " + DateFormat.getInstance().format(msg.getTime()) + " saying: " + msg.getMessage());
+                            }
+                        } else if ("today".equals(msgParts[1])) {
+                            Calendar dayCal = Calendar.getInstance();
+                            dayCal.set(Calendar.HOUR_OF_DAY, 0);
+                            dayCal.set(Calendar.MINUTE, 0);
+                            dayCal.set(Calendar.SECOND, 0);
+                            dayCal.set(Calendar.MILLISECOND, 0);
+                            
+                            List<Message> msgs = writer.getMessages(channel, dayCal.getTime());
+                            for (Message m : msgs) {
+                                sendMessage(sender,  m.getSender() + ": " + DateFormat.getInstance().format(m.getTime()) + ": " + m.getMessage());
+                            }
+                        } else if ((msgParts.length >= 3) && "date".equalsIgnoreCase(msgParts[1])) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+                            Date day = sdf.parse(msgParts[2]);
+                            
+                            List<Message> msgs = writer.getMessages(channel, day);
+                            for (Message m : msgs) {
+                                sendMessage(sender,  m.getSender() + ": " + DateFormat.getInstance().format(m.getTime()) + ": " + m.getMessage());
+                            }
                         }
                     }
                 }
