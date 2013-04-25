@@ -8,7 +8,7 @@ java -jar roomstore.jar:commons-cli.jar:cassandra-driver-core.jar:cassandra-all.
 
 roomstore is Apache2 licensed.
 
-The following commands aer available
+The following commands are available
 
 ~ seen username                 -- sends the last message the user sent in this channel (if it exists)
 ~ today                         -- dumps all messages posted today
