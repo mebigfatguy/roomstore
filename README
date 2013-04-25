@@ -2,7 +2,8 @@ roomstore - an irc journaller using cassandra
 
 to run, use
 
-java -jar roomstore.jar:commons-cli.jar:cassandra-driver-core.jar:cassandra-all.jar:snappy-java.jar:slf4j-api.jar:guava.jar:netty.jar:metrics-core.jar:jackson-core-asl.jar:jackson-mapper-asl.jar:libthrift.jar:pircbot.jar -nick your_nick -irc_server irc.freenode.net -channels ubuntu cassandra -endpoints 127.0.0.1
+java -classpath roomstore.jar:commons-cli.jar:cassandra-driver-core.jar:cassandra-all.jar:snappy-java.jar:slf4j-api.jar:guava.jar:netty.jar:metrics-core.jar:jackson-core-asl.jar:jackson-mapper-asl.jar:libthrift.jar:pircbot.jar
+     com.mebigfatguy.roomstore.Roomstore -nick your_nick -irc_server irc.freenode.net -channels ubuntu cassandra -endpoints 127.0.0.1
 
 (or you can edit and run -- ant run)
 
