@@ -28,9 +28,12 @@ import java.util.List;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IRCConnector {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(IRCConnector.class);
     private CassandraWriter writer;
     private CasBot casBot;
     private String server;
@@ -121,7 +124,7 @@ public class IRCConnector {
                 writer.addMessage(channel, sender, hostname, message);
 
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error(String.format("Failed processing message on channel %s for user %s - %s", channel, sender, message));
             }
         }
 

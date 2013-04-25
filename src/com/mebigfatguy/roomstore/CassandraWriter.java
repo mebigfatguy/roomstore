@@ -23,9 +23,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -34,7 +31,6 @@ import com.datastax.driver.core.exceptions.AlreadyExistsException;
 
 public class CassandraWriter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraWriter.class);
     private Session session;
     private PreparedStatement addMessagePS;
     private PreparedStatement setLastAccessPS;

@@ -18,8 +18,6 @@
  */
 package com.mebigfatguy.roomstore;
 
-import java.util.Arrays;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
