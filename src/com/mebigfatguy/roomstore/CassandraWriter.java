@@ -18,184 +18,90 @@
  */
 package com.mebigfatguy.roomstore;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import org.apache.cassandra.thrift.Cassandra;
-import org.apache.cassandra.thrift.Cassandra.Client;
-import org.apache.cassandra.thrift.CfDef;
-import org.apache.cassandra.thrift.Column;
-import org.apache.cassandra.thrift.ColumnOrSuperColumn;
-import org.apache.cassandra.thrift.ColumnParent;
-import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.cassandra.thrift.InvalidRequestException;
-import org.apache.cassandra.thrift.KsDef;
-import org.apache.cassandra.thrift.NotFoundException;
-import org.apache.cassandra.thrift.SchemaDisagreementException;
-import org.apache.cassandra.thrift.SlicePredicate;
-import org.apache.cassandra.thrift.SliceRange;
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
 
 public class CassandraWriter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CassandraWriter.class);
-    private static final long DEFAULT_LEASE = 10*1000;
+    private Session session;
+    private PreparedStatement addMessagePS;
+    private PreparedStatement setLastAccessPS;
+    private PreparedStatement getLastAccessPS;
+    private PreparedStatement getMessagePS;
 
-    private static final String KEY_SPACE_NAME = "roomstore";
-    private static final String COLUMN_FAMILY_NAME = "messages";
-    private static final String STRATEGY_NAME = "SimpleStrategy";
-    private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(new byte[0]);
-
-    private ConnectionPool pool;
-
-    public CassandraWriter(ConnectionPool serverPool) throws Exception {
-        pool = serverPool;
-        setupKeyspace();
+    public CassandraWriter(Session s) throws Exception {
+        session = s;
+        setUpSchema();
+        setUpStatements();
     }
 
     public void addMessage(String channel, String sender, String hostname, String message) throws Exception {
 
-        Client client = null;
-        boolean suspect = false;
-        try {
-            client = pool.lease(DEFAULT_LEASE, null);
-            client.set_keyspace(KEY_SPACE_NAME);
-
-            long timestamp = System.currentTimeMillis();
-
-            ByteBuffer key = generateKey(channel, sender);
-            Column column = generateColumn(timestamp, hostname, message);
-
-            client.insert(key, new ColumnParent(COLUMN_FAMILY_NAME), column, ConsistencyLevel.ONE);
-        } catch (Exception e) {
-            suspect = true;
-            throw e;
-        } finally {
-            pool.recycle(client, suspect);
-        }
+        Calendar dayCal = Calendar.getInstance();
+        Date dateTime = dayCal.getTime();
+        
+        dayCal.set(Calendar.HOUR_OF_DAY, 0);
+        dayCal.set(Calendar.MINUTE, 0);
+        dayCal.set(Calendar.SECOND, 0);
+        dayCal.set(Calendar.MILLISECOND, 0);
+        Date day = dayCal.getTime();   
+        
+        session.execute(addMessagePS.bind(day, dateTime, sender, message));
+        session.execute(setLastAccessPS.bind(sender, day, dateTime));
     }
 
     public Message getLastMessage(String channel, String sender) throws Exception {
 
-        Client client = null;
-        boolean suspect = false;
-        try {
-            client = pool.lease(DEFAULT_LEASE, null);
-
-            ByteBuffer key = generateKey(channel, sender);
-            ColumnParent parent = new ColumnParent(COLUMN_FAMILY_NAME);
-            SlicePredicate slice = new SlicePredicate();
-            SliceRange range = new SliceRange(EMPTY_BUFFER, EMPTY_BUFFER, true, 1);
-            slice.setSlice_range(range);
-            List<ColumnOrSuperColumn> columns = client.get_slice(key, parent, slice, ConsistencyLevel.ONE);
-            if (columns.size() == 0) {
-                return null;
+        ResultSet rs = session.execute(getLastAccessPS.bind(sender));
+        
+        if (!rs.isExhausted()) {
+            Row row = rs.one();
+            Date day = row.getDate("last_seen_day");
+            Date dateTime = row.getDate("last_seen_date_time");
+            
+            rs = session.execute(getMessagePS.bind(day, dateTime, sender));
+            if (!rs.isExhausted()) {
+                row = rs.one();
+                return new Message(channel, sender, dateTime, row.getString("message"));
             }
-
-            Column c = columns.get(0).column;
-
-            return new Message(channel, sender, new Date(c.getTimestamp()), new String(c.getValue(), "UTF-8"));
-        } catch (Exception e) {
-            suspect = true;
-            throw e;
-        } finally {
-            pool.recycle(client, suspect);
         }
+        
+        return null;
     }
 
-    private void setupKeyspace() throws Exception {
-        Client client = null;
-        boolean suspect = false;
+    private void setUpSchema() throws Exception {
+        
         try {
-            client = pool.lease(DEFAULT_LEASE, null);
-            client.describe_keyspace(KEY_SPACE_NAME);
-        } catch (NotFoundException nfe) {
-            List<CfDef> columnDefs = new ArrayList<CfDef>();
-            CfDef columnFamily = new CfDef(KEY_SPACE_NAME, COLUMN_FAMILY_NAME);
-            columnFamily.setKey_validation_class("CompositeType(UTF8Type,UTF8Type)");
-            columnFamily.setComparator_type("CompositeType(LongType,UTF8Type)");
-            columnFamily.setDefault_validation_class("UTF8Type");
-            columnFamily.setCompaction_strategy("LeveledCompactionStrategy");
-            columnDefs.add(columnFamily);
+            session.execute("CREATE KEYSPACE roomstore WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
+        } catch (AlreadyExistsException aee) {
+        }
 
-            KsDef ksdef = new KsDef(KEY_SPACE_NAME, STRATEGY_NAME, columnDefs);
-            Map<String, String> options = new HashMap<String, String>();
-            options.put("replication_factor", "1");
-            ksdef.setStrategy_options(options);
-            client.system_add_keyspace(ksdef);
-        } catch (Exception e) {
-            suspect = true;
-            throw e;
-        } finally {
-            pool.recycle(client, suspect);
+        try {
+            session.execute("CREATE TABLE roomstore.messages (day timestamp, date_time timestamp, user text, message text, primary key(day, date_time, user)) with compact storage and clustering order by (date_time desc)");
+        } catch (AlreadyExistsException aee) {
+        }
+        
+        try {
+            session.execute("CREATE TABLE roomstore.users (user text, last_seen_day timestamp, last_seen_date_time timestamp, primary key(user)) with compact storage");
+        } catch (AlreadyExistsException aee) {
         }
     }
-
-    private ByteBuffer generateKey(String channel, String sender) {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-            int len = channel.length();
-            baos.write((byte) ((len >> 8) & 0xFF));
-            baos.write((byte) ((len & 0xFF)));
-            baos.write(channel.getBytes("UTF-8"));
-            baos.write((byte) 0);
-
-            len = sender.length();
-            baos.write((byte) ((len >> 8) & 0xFF));
-            baos.write((byte) ((len & 0xFF)));
-            baos.write(sender.getBytes("UTF-8"));
-            baos.write((byte) 0);
-
-            return ByteBuffer.wrap(baos.toByteArray());
-        } catch (Exception e) {
-            throw new Error("Bad Error trying to generate key", e);
-        }
-    }
-
-    private Column generateColumn(long timestamp, String hostName, String message) {
-
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            baos.write((byte)0);
-            baos.write((byte)8);
-
-            long ts = timestamp;
-            byte[] longBytes = new byte[8];
-            for (int i = 0; i < 8; i++) {
-                longBytes[7 - i] = (byte)(ts & 0xFF);
-                ts >>>= 8;
-            }
-            baos.write(longBytes);
-            baos.write((byte) 0);
-
-            int mLen = hostName.length();
-            baos.write((byte) ((mLen >> 8) & 0xFF));
-            baos.write((byte) ((mLen & 0xFF)));
-            baos.write(hostName.toLowerCase().getBytes("UTF-8"));
-            baos.write((byte) 0);
-
-            Column c = new Column(ByteBuffer.wrap(baos.toByteArray()));
-            c.setValue(message.getBytes("UTF-8"));
-            c.setTimestamp(timestamp);
-            c.setTtl(365 * 24 * 60 * 60);
-
-            return c;
-        } catch (IOException ioe) {
-            return new Column();
-        }
+    
+    private void setUpStatements() throws Exception {
+        
+        addMessagePS = session.prepare("insert into roomstore.messages (day, date_time, user, message) values (?,?,?,?)");
+        setLastAccessPS = session.prepare("insert into roomstore.users (user, last_seen_day, last_seen_date_time) values (?,?,?)");
+        getLastAccessPS = session.prepare("select last_seen_day, last_seen_date_time from roomstore.users where user = ?");
+        getMessagePS = session.prepare("select message from roomstore.messages where day = ? and date_time = ? and user = ?");
     }
 }

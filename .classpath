@@ -2,11 +2,18 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/pircbot-1.5.0.jar"/>
+	<classpathentry kind="lib" path="lib/pircbot-1.5.0.jar" sourcepath="/home/dave/.m2/repository/pircbot/pircbot/1.5.0/pircbot-1.5.0-sources.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
-	<classpathentry kind="lib" path="lib/cassandra-clientutil-1.1.2.jar"/>
-	<classpathentry kind="lib" path="lib/cassandra-thrift-1.1.2.jar"/>
-	<classpathentry kind="lib" path="lib/libthrift-0.7.0.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.6.6.jar"/>
+	<classpathentry kind="lib" path="lib/cassandra-driver-core-1.0.0-beta2.jar"/>
+	<classpathentry kind="lib" path="lib/cassandra-all-1.2.4.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.7.2.jar"/>
+	<classpathentry kind="lib" path="lib/snappy-java-1.1.0-M3.jar"/>
+	<classpathentry kind="lib" path="lib/guava-14.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/netty-3.2.9.Final.jar"/>
+	<classpathentry kind="lib" path="lib/metrics-core-2.2.0.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-mapper-asl-1.9.12.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-core-asl-1.9.12.jar"/>
+	<classpathentry kind="lib" path="lib/libthrift-0.9.0.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

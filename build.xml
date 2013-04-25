@@ -22,19 +22,31 @@
 
 	<property name="roomstore.version" value="0.0.1" />
 
-	<property name="cassandra-thrift.version" value="1.2.3" />
-	<property name="libthrift.version" value="0.9.0" />
+    <property name="cassandra-driver.version" value="1.0.0-beta2" />
+    <property name="cassandra.version" value="1.2.4" />
+    <property name="snappy.version" value="1.1.0-M3" />
 	<property name="slf4j-api.version" value="1.7.2" />
-	<property name="commons-cli.version" value="1.2" />
+    <property name="commons-cli.version" value="1.2" />
+    <property name="guava.version" value="14.0.1" />
+    <property name="netty.version" value="3.2.9.Final" />
+    <property name="yammer.version" value="2.2.0" />
+    <property name="jackson-core.version" value="1.9.12" />
+    <property name="jackson-mapper.version" value="1.9.12" />
+    <property name="libthrift.version" value="0.9.0" />
 	<property name="pircbot.version" value="1.5.0" />
-	<property name="cassandra-clientutil.version" value="1.2.3" />
 
-	<property name="cassandra-thrift-url" value="http://repo1.maven.org/maven2/org/apache/cassandra/cassandra-thrift/${cassandra-thrift.version}/cassandra-thrift-${cassandra-thrift.version}.jar" />
-	<property name="libthrift-url" value="http://repo1.maven.org/maven2/org/apache/thrift/libthrift/${libthrift.version}/libthrift-${libthrift.version}.jar" />
+    <property name="cassandra-driver-url" value="http://repo1.maven.org/maven2/com/datastax/cassandra/cassandra-driver-core/${cassandra-driver.version}/cassandra-driver-core-${cassandra-driver.version}.jar" />
+    <property name="cassandra-url" value="http://repo1.maven.org/maven2/org/apache/cassandra/cassandra-all/${cassandra.version}/cassandra-all-${cassandra.version}.jar" />
+    <property name="snappy-url" value="http://repo1.maven.org/maven2/org/xerial/snappy/snappy-java/${snappy.version}/snappy-java-${snappy.version}.jar" />
 	<property name="slf4j-api-url" value="http://repo1.maven.org/maven2/org/slf4j/slf4j-api/${slf4j-api.version}/slf4j-api-${slf4j-api.version}.jar" />
-	<property name="commons-cli-url" value="http://repo1.maven.org/maven2/commons-cli/commons-cli/${commons-cli.version}/commons-cli-${commons-cli.version}.jar" />
+    <property name="commons-cli-url" value="http://repo1.maven.org/maven2/commons-cli/commons-cli/${commons-cli.version}/commons-cli-${commons-cli.version}.jar" />
+    <property name="guava-url" value="http://repo1.maven.org/maven2/com/google/guava/guava/${guava.version}/guava-${guava.version}.jar" />
+    <property name="netty-url" value="http://repo1.maven.org/maven2/org/jboss/netty/netty/${netty.version}/netty-${netty.version}.jar" />
+    <property name="yammer-url" value="http://repo1.maven.org/maven2/com/yammer/metrics/metrics-core/${yammer.version}/metrics-core-${yammer.version}.jar" />
+    <property name="jackson-core-url" value="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-core-asl/${jackson-core.version}/jackson-core-asl-${jackson-core.version}.jar" />
+    <property name="jackson-mapper-url" value="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-mapper-asl/${jackson-mapper.version}/jackson-mapper-asl-${jackson-mapper.version}.jar" />
+    <property name="libthrift-url" value="http://repo1.maven.org/maven2/org/apache/thrift/libthrift/${libthrift.version}/libthrift-${libthrift.version}.jar" />
 	<property name="pircbot-url" value="http://repo1.maven.org/maven2/pircbot/pircbot/${pircbot.version}/pircbot-${pircbot.version}.jar" />
-	<property name="cassandra-clientutil-url" value="http://repo1.maven.org/maven2/org/apache/cassandra/cassandra-clientutil/${cassandra-clientutil.version}/cassandra-clientutil-${cassandra-clientutil.version}.jar" />
 
 	<target name="check">
 		<available file="${dest}/${name}-${version}.jar" property="jar-exists" />
@@ -62,12 +74,18 @@
 	</macrodef>
 
 	<target name="pullall">
-        <pull url="${cassandra-thrift-url}" dest="${lib.dir}" name="cassandra-thrift" version="${cassandra-thrift.version}" />
-        <pull url="${libthrift-url}" dest="${lib.dir}" name="libthrift" version="${libthrift.version}" />
+        <pull url="${cassandra-driver-url}" dest="${lib.dir}" name="cassandra-driver-core" version="${cassandra-driver.version}" />
+        <pull url="${cassandra-url}" dest="${lib.dir}" name="cassandra-all" version="${cassandra.version}" />
+        <pull url="${snappy-url}" dest="${lib.dir}" name="snappy-java" version="${snappy.version}" />
         <pull url="${slf4j-api-url}" dest="${lib.dir}" name="slf4j-api" version="${slf4j-api.version}" />
         <pull url="${commons-cli-url}" dest="${lib.dir}" name="commons-cli" version="${commons-cli.version}" />
+        <pull url="${guava-url}" dest="${lib.dir}" name="guava" version="${guava.version}" />
+        <pull url="${netty-url}" dest="${lib.dir}" name="netty" version="${netty.version}" />
+        <pull url="${yammer-url}" dest="${lib.dir}" name="metrics-core" version="${yammer.version}" />
+        <pull url="${jackson-core-url}" dest="${lib.dir}" name="jackson-core-asl" version="${jackson-core.version}" />
+        <pull url="${jackson-mapper-url}" dest="${lib.dir}" name="jackson-mapper-asl" version="${jackson-mapper.version}" />
+        <pull url="${libthrift-url}" dest="${lib.dir}" name="libthrift" version="${libthrift.version}" />
         <pull url="${pircbot-url}" dest="${lib.dir}" name="pircbot" version="${pircbot.version}" />
-        <pull url="${cassandra-clientutil-url}" dest="${lib.dir}" name="cassandra-clientutil" version="${cassandra-clientutil.version}" />
 	</target>
 
 	<target name="clean" description="removes all generated collateral">
@@ -78,14 +96,18 @@
 	</target>
 
 	<path id="roomstore.classpath">
-		<pathelement
-			location="${lib.dir}/cassandra-thrift-${cassandra-thrift.version}.jar" />
-		<pathelement location="${lib.dir}/libthrift-${libthrift.version}.jar" />
+		<pathelement location="${lib.dir}/cassandra-driver-core-${cassandra-driver.version}.jar" />
+        <pathelement location="${lib.dir}/cassandra-all-${cassandra.version}.jar" />
+        <pathelement location="${lib.dir}/snappy-java-${snappy.version}.jar" />
 		<pathelement location="${lib.dir}/slf4j-api-${slf4j-api.version}.jar" />
-		<pathelement location="${lib.dir}/commons-cli-${commons-cli.version}.jar" />
+        <pathelement location="${lib.dir}/commons-cli-${commons-cli.version}.jar" />
+        <pathelement location="${lib.dir}/guava-${guava.version}.jar" />
+        <pathelement location="${lib.dir}/netty-${netty.version}.jar" />
+        <pathelement location="${lib.dir}/metrics-core-${yammer.version}.jar" />
+        <pathelement location="${lib.dir}/jackson-core-asl-${jackson-core.version}.jar" />
+        <pathelement location="${lib.dir}/jackson-mapper-asl-${jackson-mapper.version}.jar" />
+        <pathelement location="${lib.dir}/libthrift-${libthrift.version}.jar" />
 		<pathelement location="${lib.dir}/pircbot-${pircbot.version}.jar" />
-		<pathelement
-			location="${lib.dir}/cassandra-clientutil-${cassandra-clientutil.version}.jar" />
 	</path>
 
 	<target name="-init" description="prepares repository for a build">
@@ -152,10 +174,10 @@
 		description="prepares everything for a release" />
 
 	<target name="run" depends="jar" description="run roomstore against irc.freenode.net's #cassandra, #cassandra-dev">
-		<java classname="com.mebigfatguy.roomstore.RoomStore" fork="true" maxmemory="256m">
-			<arg value="-cassandra_server"/>
-			<arg value="localhost/9160"/>
-			<arg value="-channels"/>
+		<java classname="com.mebigfatguy.roomstore.RoomStore" fork="true" maxmemory="256m">s
+            <arg value="-endpoints"/>
+            <arg value="127.0.0.1"/>
+            <arg value="-channels"/>
 			<arg value="#cassandra"/>
 			<arg value="#cassandra-dev"/>
 			<arg value="-irc_server"/>
@@ -165,11 +187,17 @@
 			<classpath>
 				<pathelement location="${basedir}/roomstore-${roomstore.version}.jar"/>
 				<pathelement location="${lib.dir}/commons-cli-${commons-cli.version}.jar"/>
-				<pathelement location="${lib.dir}/cassandra-thrift-${cassandra-thrift.version}.jar" />
-				<pathelement location="${lib.dir}/libthrift-${libthrift.version}.jar" />
-				<pathelement location="${lib.dir}/slf4j-api-${slf4j-api.version}.jar" />
+                <pathelement location="${lib.dir}/cassandra-driver-core-${cassandra-driver.version}.jar" />
+                <pathelement location="${lib.dir}/cassandra-all-${cassandra.version}.jar" />
+                <pathelement location="${lib.dir}/snappy-java-${snappy.version}.jar" />
+                <pathelement location="${lib.dir}/slf4j-api-${slf4j-api.version}.jar" />
+                <pathelement location="${lib.dir}/guava-${guava.version}.jar" />
+                <pathelement location="${lib.dir}/netty-${netty.version}.jar" />
+                <pathelement location="${lib.dir}/metrics-core-${yammer.version}.jar" />
+                <pathelement location="${lib.dir}/jackson-core-asl-${jackson-core.version}.jar" />
+                <pathelement location="${lib.dir}/jackson-mapper-asl-${jackson-mapper.version}.jar" />
+                <pathelement location="${lib.dir}/libthrift-${libthrift.version}.jar" />
 				<pathelement location="${lib.dir}/pircbot-${pircbot.version}.jar" />
-				<pathelement location="${lib.dir}/cassandra-clientutil-${cassandra-clientutil.version}.jar" />
 			</classpath>
 		</java>
  	</target>

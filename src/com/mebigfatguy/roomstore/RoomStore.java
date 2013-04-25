@@ -28,12 +28,15 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
+
 public class RoomStore {
 
     private static final String NICK_NAME = "nick";
     private static final String IRCSERVER = "irc_server";
     private static final String CHANNELS = "channels";
-    private static final String CASANDRASERVER = "cassandra_server";
+    private static final String ENDPOINTS = "endpoints";
 
     public static void main(String[] args) {
         Options options = createOptions();
@@ -44,18 +47,25 @@ public class RoomStore {
             String nickname = cmdLine.getOptionValue(NICK_NAME);
             String server = cmdLine.getOptionValue(IRCSERVER);
             String[] channels = cmdLine.getOptionValues(CHANNELS);
+            String[] endPoints = cmdLine.getOptionValues(ENDPOINTS);
+            
+            if ((endPoints == null) || (endPoints.length == 0)) {
+                endPoints = new String[] { "127.0.0.1" };
+            }
 
             IRCConnector connector = new IRCConnector(nickname, server, channels);
 
-            final ConnectionPool pool = new ConnectionPool(cmdLine.getOptionValues(CASANDRASERVER));
-            CassandraWriter writer = new CassandraWriter(pool);
+            Cluster cluster = new Cluster.Builder().addContactPoints(endPoints).build();
+            final Session session = cluster.connect();
+            
+            CassandraWriter writer = new CassandraWriter(session);
             connector.setWriter(writer);
 
             connector.startRecording();
 
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 public void run() {
-                    pool.terminate();
+                    session.shutdown();
                 }
             }));
 
@@ -85,8 +95,9 @@ public class RoomStore {
         option.setArgs(100);
         options.addOption(option);
 
-        option = new Option(CASANDRASERVER, true, "space separated list of server/port of cassandra server");
-        option.setRequired(true);
+        option = new Option(ENDPOINTS, true, "space separated list of cassandra server server/ports");
+        option.setOptionalArg(true);
+        option.setRequired(false);
         option.setArgs(100);
         options.addOption(option);
 
