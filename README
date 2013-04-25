@@ -2,10 +2,16 @@ roomstore - an irc journaller using cassandra
 
 to run, use
 
-java -jar roomstore.jar:cassandra-clientutil.jar:cassandra-thrift.jar:commons-cli.jar:libthrift.jar:pircbot.jar:slf4j-api.jar -nick your_nick -irc_server irc.freenode.net -channels ubuntu cassandra -cassandra_server localhost/9160
+java -jar roomstore.jar:commons-cli.jar:cassandra-driver-core.jar:cassandra-all.jar:snappy-java.jar:slf4j-api.jar:guava.jar:netty.jar:metrics-core.jar:jackson-core-asl.jar:jackson-mapper-asl.jar:libthrift.jar:pircbot.jar -nick your_nick -irc_server irc.freenode.net -channels ubuntu cassandra -endpoints 127.0.0.1
 
-
-you may need to add cassandra.jar to the classpath. This is a problem with the packaging of cassandra-clientutil.jar and hopefully will be resolved shortly.
-
+(or you can edit and run -- ant run)
 
 roomstore is Apache2 licensed.
+
+The following commands aer available
+
+~ seen username                 -- sends the last message the user sent in this channel (if it exists)
+~ today                         -- dumps all messages posted today
+~ date MM/yy/dddd               -- dumps all messages from that day
+
+all responses are sent via private message.
