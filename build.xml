@@ -174,7 +174,7 @@
 		description="prepares everything for a release" />
 
 	<target name="run" depends="jar" description="run roomstore against irc.freenode.net's #cassandra, #cassandra-dev">
-		<java classname="com.mebigfatguy.roomstore.RoomStore" fork="true" maxmemory="256m">s
+		<java classname="com.mebigfatguy.roomstore.RoomStore" fork="true" maxmemory="256m">
             <arg value="-endpoints"/>
             <arg value="127.0.0.1"/>
             <arg value="-channels"/>
