@@ -80,17 +80,22 @@ public class IRCConnector {
 
         public void onMessage(String channel, String sender, String login, String hostname, String message) {
             try {
-                writer.addMessage(channel, sender, hostname, message);
                 String[] msgParts = message.split("\\s+");
                 if (msgParts.length >= 2) {
                     if ("~".equals(msgParts[0])) {
-                        if ((msgParts.length >= 3) && "seen".equalsIgnoreCase(msgParts[1])) {
+                        if ("help".equalsIgnoreCase(msgParts[1])) {
+                            sendMessage(sender, "roomstore - https://github.com/mebigfatguy/roomstore");
+                            sendMessage(sender, "~ help                  -- this message");
+                            sendMessage(sender, "~ seen user             -- show last time user said something if available");
+                            sendMessage(sender, "~ today                 -- see messages from today");
+                            sendMessage(sender, "~ date MM/yy/dddd       -- see messages from date");
+                        } else if ((msgParts.length >= 3) && "seen".equalsIgnoreCase(msgParts[1])) {
                             String user = msgParts[2].trim();
                             Message msg = writer.getLastMessage(channel,  user);
                             if (msg != null) {
                                 sendMessage(sender,  user + " last seen " + DateFormat.getInstance().format(msg.getTime()) + " saying: " + msg.getMessage());
                             }
-                        } else if ("today".equals(msgParts[1])) {
+                        } else if ("today".equalsIgnoreCase(msgParts[1])) {
                             Calendar dayCal = Calendar.getInstance();
                             dayCal.set(Calendar.HOUR_OF_DAY, 0);
                             dayCal.set(Calendar.MINUTE, 0);
@@ -110,8 +115,10 @@ public class IRCConnector {
                                 sendMessage(sender,  m.getSender() + ": " + DateFormat.getInstance().format(m.getTime()) + ": " + m.getMessage());
                             }
                         }
+                        return;
                     }
                 }
+                writer.addMessage(channel, sender, hostname, message);
 
             } catch (Exception e) {
                 e.printStackTrace();

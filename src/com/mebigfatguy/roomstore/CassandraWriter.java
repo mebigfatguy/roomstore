@@ -88,7 +88,7 @@ public class CassandraWriter {
         ResultSet rs = session.execute(getMessagesOnDatePS.bind(day, channel));
         for (Row row : rs) {
             Message m = new Message(channel, row.getString("user"), row.getDate("date_time"), row.getString("message"));
-            messages.add(m);
+            messages.add(0, m);
         }
         
         return messages; 
