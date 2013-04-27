@@ -51,7 +51,7 @@ public class RoomStore {
                 endPoints = new String[] { "127.0.0.1" };
             }
 
-            IRCConnector connector = new IRCConnector(nickname, server, channels);
+            final IRCConnector connector = new IRCConnector(nickname, server, channels);
 
             Cluster cluster = new Cluster.Builder().addContactPoints(endPoints).build();
             final Session session = cluster.connect();
@@ -63,6 +63,7 @@ public class RoomStore {
 
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 public void run() {
+                    connector.stopRecording();
                     session.shutdown();
                 }
             }));

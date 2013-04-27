@@ -183,7 +183,7 @@
 			<arg value="-irc_server"/>
 			<arg value="irc.freenode.net"/>
 			<arg value="-nick"/>
-			<arg value="casasa"/>
+			<arg value="roomstore"/>
 			<classpath>
 				<pathelement location="${basedir}/roomstore-${roomstore.version}.jar"/>
 				<pathelement location="${lib.dir}/commons-cli-${commons-cli.version}.jar"/>
