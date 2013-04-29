@@ -95,6 +95,8 @@ public class CassandraWriter {
         try {
             session.execute("CREATE KEYSPACE roomstore WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
         } catch (AlreadyExistsException aee) {
+        } finally {
+            session.execute("use roomstore");
         }
 
         try {
