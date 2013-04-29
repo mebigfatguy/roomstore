@@ -1,8 +1,8 @@
 /*
  * roomstore - an irc journaller using cassandra.
  *
- * Copyright 2011-2013 MeBigFatGuy.com
- * Copyright 2011-2013 Dave Brosius
+ * Copyright 2011-2012 MeBigFatGuy.com
+ * Copyright 2011-2012 Dave Brosius
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
