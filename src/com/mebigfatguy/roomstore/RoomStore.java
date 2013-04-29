@@ -35,6 +35,7 @@ public class RoomStore {
     private static final String IRCSERVER = "irc_server";
     private static final String CHANNELS = "channels";
     private static final String ENDPOINTS = "endpoints";
+    private static final String RF = "rc";
 
     public static void main(String[] args) {
         Options options = createOptions();
@@ -46,9 +47,17 @@ public class RoomStore {
             String server = cmdLine.getOptionValue(IRCSERVER);
             String[] channels = cmdLine.getOptionValues(CHANNELS);
             String[] endPoints = cmdLine.getOptionValues(ENDPOINTS);
+            String rf = cmdLine.getOptionValue(RF);
             
             if ((endPoints == null) || (endPoints.length == 0)) {
                 endPoints = new String[] { "127.0.0.1" };
+            }
+            
+            int replicationFactor;
+            try {
+                replicationFactor = Integer.parseInt(rf);
+            } catch (Exception e) {
+                replicationFactor = 1;
             }
 
             final IRCConnector connector = new IRCConnector(nickname, server, channels);
@@ -56,7 +65,7 @@ public class RoomStore {
             Cluster cluster = new Cluster.Builder().addContactPoints(endPoints).build();
             final Session session = cluster.connect();
             
-            CassandraWriter writer = new CassandraWriter(session);
+            CassandraWriter writer = new CassandraWriter(session, replicationFactor);
             connector.setWriter(writer);
 
             connector.startRecording();
@@ -98,6 +107,10 @@ public class RoomStore {
         option.setOptionalArg(true);
         option.setRequired(false);
         option.setArgs(100);
+        options.addOption(option);
+        
+        option = new Option(RF, true, "replication factor[default=1]");
+        option.setRequired(false);
         options.addOption(option);
 
         return options;

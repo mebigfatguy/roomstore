@@ -38,9 +38,9 @@ public class CassandraWriter {
     private PreparedStatement getMessagePS;
     private PreparedStatement getMessagesOnDatePS;
 
-    public CassandraWriter(Session s) throws Exception {
+    public CassandraWriter(Session s, int replicationFactor) throws Exception {
         session = s;
-        setUpSchema();
+        setUpSchema(replicationFactor);
         setUpStatements();
     }
 
@@ -90,10 +90,10 @@ public class CassandraWriter {
         return messages; 
     }
 
-    private void setUpSchema() throws Exception {
+    private void setUpSchema(int replicationFactor) throws Exception {
         
         try {
-            session.execute("CREATE KEYSPACE roomstore WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
+            session.execute(String.format("CREATE KEYSPACE roomstore WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : %d }", replicationFactor));
         } catch (AlreadyExistsException aee) {
         } finally {
             session.execute("use roomstore");
