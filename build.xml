@@ -23,7 +23,7 @@
 	<property name="roomstore.version" value="0.0.1" />
 
     <property name="cassandra-driver.version" value="1.0.0" />
-    <property name="cassandra.version" value="1.2.4" />
+    <property name="cassandra.version" value="1.2.5" />
     <property name="snappy.version" value="1.1.0-M3" />
 	<property name="slf4j-api.version" value="1.7.5" />
     <property name="commons-cli.version" value="1.2" />
