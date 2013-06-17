@@ -23,6 +23,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.jibble.pircbot.PircBot;
 
@@ -64,8 +66,14 @@ class CasBot extends PircBot {
                         }
                     } else if ((msgParts.length >= 3) && "topic".equalsIgnoreCase(msgParts[1])) {
                         String word = msgParts[2].trim().toLowerCase();
-                        List<Message> messages = ircConnector.writer.getTopicMessages(channel, word);
-                        for (Message msg : messages) {
+                        Set<Message> intersectionMessages = new TreeSet<Message>(ircConnector.writer.getTopicMessages(channel, word));
+                        
+                        for (int i = 3; i < msgParts.length; ++i) {
+                            word = msgParts[i].trim().toLowerCase();
+                            List<Message> messages = ircConnector.writer.getTopicMessages(channel, word);
+                            intersectionMessages.retainAll(messages);
+                        }
+                        for (Message msg : intersectionMessages) {
                             messagePoster.post(msg.getSender(), msg.getSender() + " @ " + DateFormat.getInstance().format(msg.getTime()) + " said: " + msg.getMessage());
                         }
                     } else if ("today".equalsIgnoreCase(msgParts[1])) {

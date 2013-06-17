@@ -20,7 +20,7 @@ package com.mebigfatguy.roomstore;
 
 import java.util.Date;
 
-public class Message {
+public class Message implements Comparable<Message> {
 
     private String channel;
     private String sender;
@@ -49,4 +49,38 @@ public class Message {
     public String getMessage() {
         return message;
     }
+    
+    public int hashCode() {
+        return channel.hashCode() ^ sender.hashCode() ^ time.hashCode() ^ message.hashCode();
+    }
+    
+    public boolean equals(Object o) {
+        if (!(o instanceof Message)) {
+            return false;
+        }
+        
+        Message that = (Message) o;
+        
+        return channel.equals(that.channel) && sender.equals(that.sender) && time.equals(that.time) && message.equals(that.message);
+    }
+
+    @Override
+    public int compareTo(Message that) {
+        int cmp = channel.compareTo(that.channel);
+        if (cmp != 0) {
+            return cmp;
+        }
+        
+        cmp = time.compareTo(that.time);
+        if (cmp != 0) {
+            return cmp;
+        }
+          
+        cmp = sender.compareTo(that.sender);
+        if (cmp != 0) {
+            return cmp;
+        }
+        
+        return message.compareTo(that.message); 
+    } 
 }
