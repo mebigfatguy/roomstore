@@ -61,7 +61,7 @@ public class CassandraWriter {
         session.execute(addMessagePS.bind(day, channel, dateTime, sender, message));
         session.execute(setLastAccessPS.bind(sender, channel, day, dateTime));
         
-        for (String word : message.split("\\s+")) {
+        for (String word : message.split("\\s+\\.\\,\\?\\:")) {
             session.execute(addTopicPS.bind(channel, word.toLowerCase(), dateTime, sender));
         }
     }
