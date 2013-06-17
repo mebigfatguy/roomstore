@@ -34,9 +34,12 @@ public class CassandraWriter {
     private Session session;
     private PreparedStatement addMessagePS;
     private PreparedStatement setLastAccessPS;
+    private PreparedStatement addTopicPS;
     private PreparedStatement getLastAccessPS;
     private PreparedStatement getMessagePS;
     private PreparedStatement getMessagesOnDatePS;
+    private PreparedStatement getTopicEntriesPS;
+    private PreparedStatement getSpecificMessagePS;
 
     public CassandraWriter(Session s, int replicationFactor) throws Exception {
         session = s;
@@ -53,10 +56,14 @@ public class CassandraWriter {
         dayCal.set(Calendar.MINUTE, 0);
         dayCal.set(Calendar.SECOND, 0);
         dayCal.set(Calendar.MILLISECOND, 0);
-        Date day = dayCal.getTime();   
+        Date day = dayCal.getTime();
         
         session.execute(addMessagePS.bind(day, channel, dateTime, sender, message));
         session.execute(setLastAccessPS.bind(sender, channel, day, dateTime));
+        
+        for (String word : message.split("\\s+")) {
+            session.execute(addTopicPS.bind(channel, word, dateTime, sender));
+        }
     }
 
     public Message getLastMessage(String channel, String sender) throws Exception {
@@ -89,6 +96,40 @@ public class CassandraWriter {
         
         return messages; 
     }
+    
+    public Message getSpecificMessage(Date day, String channel, Date date_time) {
+        ResultSet rs = session.execute(getSpecificMessagePS.bind(day, channel, date_time));
+        if (!rs.isExhausted()) {
+            Row row = rs.one();
+            return new Message(channel, row.getString("user"), date_time, row.getString("message"));        
+        }
+        
+        return null;
+    }
+    
+    public List<Message> getTopicMessages(String channel, String word) {
+        Calendar cal = Calendar.getInstance();
+        List<Message> messages = new ArrayList<Message>();
+        ResultSet rs = session.execute(getTopicEntriesPS.bind(channel, word));
+        for (Row row : rs) {
+            Date date_time = row.getDate("date_time");
+            
+            cal.setTime(date_time);
+            cal.clear(Calendar.HOUR);
+            cal.clear(Calendar.MINUTE);
+            cal.clear(Calendar.SECOND);
+            cal.clear(Calendar.MILLISECOND);
+            
+            Date day = cal.getTime();
+            
+            Message m = getSpecificMessage(day, channel, date_time);
+            if (m != null) {
+                messages.add(m);
+            }
+        }
+        
+        return messages;
+    }
 
     private void setUpSchema(int replicationFactor) throws Exception {
         
@@ -108,14 +149,22 @@ public class CassandraWriter {
             session.execute("CREATE TABLE roomstore.users (user text, channel text, last_seen_day timestamp, last_seen_date_time timestamp, primary key(user, channel))");
         } catch (AlreadyExistsException aee) {
         }
+        
+        try {
+            session.execute("CREATE TABLE roomstore.topics (channel text, word text, date_time timestamp, user text, primary key(channel, word, date_time)) with compact storage and clustering order by (word asc, date_time desc)");
+        } catch (AlreadyExistsException aee) {
+        }
     }
     
     private void setUpStatements() throws Exception {
         
         addMessagePS = session.prepare("insert into roomstore.messages (day, channel, date_time, user, message) values (?,?,?,?,?)");
         setLastAccessPS = session.prepare("insert into roomstore.users (user, channel, last_seen_day, last_seen_date_time) values (?,?,?,?)");
+        addTopicPS = session.prepare("insert into roomstore.topics (channel, word, date_time, user) values (?, ?, ?, ?)");
         getLastAccessPS = session.prepare("select last_seen_day, last_seen_date_time from roomstore.users where user = ? and channel = ?");
         getMessagePS = session.prepare("select message from roomstore.messages where day = ? and channel = ? and date_time = ? and user = ?");
         getMessagesOnDatePS = session.prepare("select user, date_time, message from roomstore.messages where day = ? and channel = ?");
+        getTopicEntriesPS = session.prepare("select date_time, user from roomstore.topics where channel = ? and word = ?");
+        getSpecificMessagePS = session.prepare("select message, user from roomstore.messages where day = ? and channel = ? and date_time = ?");
     }
 }
