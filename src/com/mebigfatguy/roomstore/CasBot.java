@@ -63,7 +63,7 @@ class CasBot extends PircBot {
                             messagePoster.post(sender,  user + " last seen " + DateFormat.getInstance().format(msg.getTime()) + " saying: " + msg.getMessage());
                         }
                     } else if ((msgParts.length >= 3) && "topic".equalsIgnoreCase(msgParts[1])) {
-                        String word = msgParts[2].trim();
+                        String word = msgParts[2].trim().toLowerCase();
                         List<Message> messages = ircConnector.writer.getTopicMessages(channel, word);
                         for (Message msg : messages) {
                             messagePoster.post(msg.getSender(), msg.getSender() + " @ " + DateFormat.getInstance().format(msg.getTime()) + " said: " + msg.getMessage());
