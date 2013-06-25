@@ -56,7 +56,8 @@ class CasBot extends PircBot {
                         response.append("~ help                  -- this message\n");
                         response.append("~ seen user             -- show last time user said something if available\n");
                         response.append("~ today                 -- see messages from today\n");
-                        response.append("~ date MM/yy/dddd       -- see messages from date");
+                        response.append("~ date MM/yy/dddd       -- see messages from date\n");
+                        response.append("~ topic {word} ...      -- see messages that talk about the words specified\n");
                         messagePoster.post(sender,  response.toString());
                     } else if ((msgParts.length >= 3) && "seen".equalsIgnoreCase(msgParts[1])) {
                         String user = msgParts[2].trim();
