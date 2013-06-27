@@ -31,6 +31,8 @@ import com.datastax.driver.core.exceptions.AlreadyExistsException;
 
 public class CassandraWriter {
 
+    private static final String TOTAL_COUNTER = ":TOTAL:";
+    
     private Session session;
     private PreparedStatement addMessagePS;
     private PreparedStatement setLastAccessPS;
@@ -40,6 +42,7 @@ public class CassandraWriter {
     private PreparedStatement getMessagesOnDatePS;
     private PreparedStatement getTopicEntriesPS;
     private PreparedStatement getSpecificMessagePS;
+    private PreparedStatement incrementCounterPS;
 
     public CassandraWriter(Session s, int replicationFactor) throws Exception {
         session = s;
@@ -61,10 +64,18 @@ public class CassandraWriter {
         session.execute(addMessagePS.bind(day, channel, dateTime, sender, message));
         session.execute(setLastAccessPS.bind(sender, channel, day, dateTime));
         
+        long total = 0;
         for (String word : message.split("\\s+|\\.|\\,|\\?|\\:")) {
-            if (word.length() > 0)
-                session.execute(addTopicPS.bind(channel, word.toLowerCase(), dateTime, sender));
+            if (word.length() > 0) {
+                word = word.toLowerCase();
+                session.execute(addTopicPS.bind(channel, word, dateTime, sender));
+                ++total;
+                session.execute(incrementCounterPS.bind(1L, word));
+            }
         }
+        
+        if (total > 0) 
+            session.execute(incrementCounterPS.bind(total, TOTAL_COUNTER));
     }
 
     public Message getLastMessage(String channel, String sender) throws Exception {
@@ -155,6 +166,11 @@ public class CassandraWriter {
             session.execute("CREATE TABLE roomstore.topics (channel text, word text, date_time timestamp, user text, primary key(channel, word, date_time)) with compact storage and clustering order by (word asc, date_time desc)");
         } catch (AlreadyExistsException aee) {
         }
+        
+        try {
+            session.execute("CREATE TABLE roomstore.topic_counters (word text primary key, count counter)");
+        } catch (AlreadyExistsException aee) {
+        }
     }
     
     private void setUpStatements() throws Exception {
@@ -167,5 +183,6 @@ public class CassandraWriter {
         getMessagesOnDatePS = session.prepare("select user, date_time, message from roomstore.messages where day = ? and channel = ?");
         getTopicEntriesPS = session.prepare("select date_time, user from roomstore.topics where channel = ? and word = ?");
         getSpecificMessagePS = session.prepare("select message, user from roomstore.messages where day = ? and channel = ? and date_time = ?");
+        incrementCounterPS = session.prepare("update roomstore.topic_counters set count = count + ? where word = ?");
     }
 }
