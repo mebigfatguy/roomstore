@@ -127,10 +127,10 @@ public class CassandraWriter {
             Date date_time = row.getDate("date_time");
             
             cal.setTime(date_time);
-            cal.clear(Calendar.HOUR_OF_DAY);
-            cal.clear(Calendar.MINUTE);
-            cal.clear(Calendar.SECOND);
-            cal.clear(Calendar.MILLISECOND);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
             
             Date day = cal.getTime();
             
