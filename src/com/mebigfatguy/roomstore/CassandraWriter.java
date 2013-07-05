@@ -70,12 +70,12 @@ public class CassandraWriter {
                 word = word.toLowerCase();
                 session.execute(addTopicPS.bind(channel, word, dateTime, sender));
                 ++total;
-                session.execute(incrementCounterPS.bind(1L, word));
+                session.execute(incrementCounterPS.bind(1L, String.valueOf(word.charAt(0)), word));
             }
         }
         
         if (total > 0) 
-            session.execute(incrementCounterPS.bind(total, TOTAL_COUNTER));
+            session.execute(incrementCounterPS.bind(total, TOTAL_COUNTER, TOTAL_COUNTER));
     }
 
     public Message getLastMessage(String channel, String sender) throws Exception {
@@ -168,7 +168,7 @@ public class CassandraWriter {
         }
         
         try {
-            session.execute("CREATE TABLE roomstore.topic_counters (word text primary key, count counter)");
+            session.execute("CREATE TABLE roomstore.topic_counters (prefix text, word text, count counter, primary key (prefix, word))");
         } catch (AlreadyExistsException aee) {
         }
     }
@@ -183,6 +183,6 @@ public class CassandraWriter {
         getMessagesOnDatePS = session.prepare("select user, date_time, message from roomstore.messages where day = ? and channel = ?");
         getTopicEntriesPS = session.prepare("select date_time, user from roomstore.topics where channel = ? and word = ?");
         getSpecificMessagePS = session.prepare("select message, user from roomstore.messages where day = ? and channel = ? and date_time = ?");
-        incrementCounterPS = session.prepare("update roomstore.topic_counters set count = count + ? where word = ?");
+        incrementCounterPS = session.prepare("update roomstore.topic_counters set count = count + ? where prefix = ? and word = ?");
     }
 }
