@@ -30,8 +30,8 @@
     <property name="guava.version" value="14.0.1" />
     <property name="netty.version" value="3.2.9.Final" />
     <property name="yammer.version" value="2.2.0" />
-    <property name="jackson-core.version" value="1.9.12" />
-    <property name="jackson-mapper.version" value="1.9.12" />
+    <property name="jackson-core.version" value="1.9.13" />
+    <property name="jackson-mapper.version" value="1.9.13" />
     <property name="libthrift.version" value="0.9.0" />
 	<property name="pircbot.version" value="1.5.0" />
 
