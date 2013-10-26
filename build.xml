@@ -159,6 +159,10 @@
 			</fileset>
 			<manifest>
 				<attribute name="roomstore-version" value="${roomstore.version}" />
+                <attribute name="Main-Class" value="com.mebigfatguy.roomstore.RoomStore"/>
+				<attribute name="Application-Name" value="RoomStore" />
+                <attribute name="Permissions" value="all-permissions" />
+                <attribute name="Codebase" value="*" />
 				<attribute name="Bundle-ManifestVersion" value="2" />
 				<attribute name="Bundle-Name" value="roomstore plugin" />
 				<attribute name="Bundle-SymbolicName" value="roomstore; singleton:=true" />
