@@ -8,8 +8,9 @@
 	KIND, either express or implied. * See the License for the specific language 
 	governing permissions and limitations * under the License. */ -->
 
-<project name="roomstore" default="jar">
-	<property file="build.properties" />
+<project name="roomstore" default="jar" xmlns:yank="antlib:com.mebigfatguy.yank">
+	<property file="build.properties"/>
+	<property file="version.properties" />
 
 	<property name="src.dir" value="${basedir}/src" />
 	<property name="classes.dir" value="${basedir}/classes" />
@@ -22,72 +23,6 @@
 
 	<property name="roomstore.version" value="0.0.1" />
 
-    <property name="cassandra-driver.version" value="1.0.0" />
-    <property name="cassandra.version" value="1.2.5" />
-    <property name="snappy.version" value="1.1.0-M3" />
-	<property name="slf4j-api.version" value="1.7.5" />
-    <property name="commons-cli.version" value="1.2" />
-    <property name="guava.version" value="14.0.1" />
-    <property name="netty.version" value="3.2.9.Final" />
-    <property name="yammer.version" value="2.2.0" />
-    <property name="jackson-core.version" value="1.9.13" />
-    <property name="jackson-mapper.version" value="1.9.13" />
-    <property name="libthrift.version" value="0.9.0" />
-	<property name="pircbot.version" value="1.5.0" />
-
-    <property name="cassandra-driver-url" value="http://repo1.maven.org/maven2/com/datastax/cassandra/cassandra-driver-core/${cassandra-driver.version}/cassandra-driver-core-${cassandra-driver.version}.jar" />
-    <property name="cassandra-url" value="http://repo1.maven.org/maven2/org/apache/cassandra/cassandra-all/${cassandra.version}/cassandra-all-${cassandra.version}.jar" />
-    <property name="snappy-url" value="http://repo1.maven.org/maven2/org/xerial/snappy/snappy-java/${snappy.version}/snappy-java-${snappy.version}.jar" />
-	<property name="slf4j-api-url" value="http://repo1.maven.org/maven2/org/slf4j/slf4j-api/${slf4j-api.version}/slf4j-api-${slf4j-api.version}.jar" />
-    <property name="commons-cli-url" value="http://repo1.maven.org/maven2/commons-cli/commons-cli/${commons-cli.version}/commons-cli-${commons-cli.version}.jar" />
-    <property name="guava-url" value="http://repo1.maven.org/maven2/com/google/guava/guava/${guava.version}/guava-${guava.version}.jar" />
-    <property name="netty-url" value="http://repo1.maven.org/maven2/org/jboss/netty/netty/${netty.version}/netty-${netty.version}.jar" />
-    <property name="yammer-url" value="http://repo1.maven.org/maven2/com/yammer/metrics/metrics-core/${yammer.version}/metrics-core-${yammer.version}.jar" />
-    <property name="jackson-core-url" value="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-core-asl/${jackson-core.version}/jackson-core-asl-${jackson-core.version}.jar" />
-    <property name="jackson-mapper-url" value="http://repo1.maven.org/maven2/org/codehaus/jackson/jackson-mapper-asl/${jackson-mapper.version}/jackson-mapper-asl-${jackson-mapper.version}.jar" />
-    <property name="libthrift-url" value="http://repo1.maven.org/maven2/org/apache/thrift/libthrift/${libthrift.version}/libthrift-${libthrift.version}.jar" />
-	<property name="pircbot-url" value="http://repo1.maven.org/maven2/pircbot/pircbot/${pircbot.version}/pircbot-${pircbot.version}.jar" />
-
-	<target name="check">
-		<available file="${dest}/${name}-${version}.jar" property="jar-exists" />
-	</target>
-
-	<target name="_pull" depends="check" unless="jar-exists">
-		<get src="${url}" dest="${dest}/${name}-${version}.jar" verbose="true"
-			ignoreerrors="true" />
-	</target>
-
-	<macrodef name="pull">
-		<attribute name="url" />
-		<attribute name="dest" />
-		<attribute name="name" />
-		<attribute name="version" />
-
-		<sequential>
-			<antcall target="_pull">
-				<param name="url" value="@{url}" />
-				<param name="dest" value="@{dest}" />
-				<param name="name" value="@{name}" />
-				<param name="version" value="@{version}" />
-			</antcall>
-		</sequential>
-	</macrodef>
-
-	<target name="pullall">
-        <pull url="${cassandra-driver-url}" dest="${lib.dir}" name="cassandra-driver-core" version="${cassandra-driver.version}" />
-        <pull url="${cassandra-url}" dest="${lib.dir}" name="cassandra-all" version="${cassandra.version}" />
-        <pull url="${snappy-url}" dest="${lib.dir}" name="snappy-java" version="${snappy.version}" />
-        <pull url="${slf4j-api-url}" dest="${lib.dir}" name="slf4j-api" version="${slf4j-api.version}" />
-        <pull url="${commons-cli-url}" dest="${lib.dir}" name="commons-cli" version="${commons-cli.version}" />
-        <pull url="${guava-url}" dest="${lib.dir}" name="guava" version="${guava.version}" />
-        <pull url="${netty-url}" dest="${lib.dir}" name="netty" version="${netty.version}" />
-        <pull url="${yammer-url}" dest="${lib.dir}" name="metrics-core" version="${yammer.version}" />
-        <pull url="${jackson-core-url}" dest="${lib.dir}" name="jackson-core-asl" version="${jackson-core.version}" />
-        <pull url="${jackson-mapper-url}" dest="${lib.dir}" name="jackson-mapper-asl" version="${jackson-mapper.version}" />
-        <pull url="${libthrift-url}" dest="${lib.dir}" name="libthrift" version="${libthrift.version}" />
-        <pull url="${pircbot-url}" dest="${lib.dir}" name="pircbot" version="${pircbot.version}" />
-	</target>
-
 	<target name="clean" description="removes all generated collateral">
 		<delete dir="${classes.dir}" />
 		<delete dir="${javadoc.dir}" />
@@ -96,27 +31,35 @@
 	</target>
 
 	<path id="roomstore.classpath">
-		<pathelement location="${lib.dir}/cassandra-driver-core-${cassandra-driver.version}.jar" />
-        <pathelement location="${lib.dir}/cassandra-all-${cassandra.version}.jar" />
-        <pathelement location="${lib.dir}/snappy-java-${snappy.version}.jar" />
+		<pathelement location="${lib.dir}/cassandra-driver-core-${cassandra-driver-core.version}.jar" />
+        <pathelement location="${lib.dir}/cassandra-all-${cassandra-all.version}.jar" />
+        <pathelement location="${lib.dir}/snappy-java-${snappy-java.version}.jar" />
 		<pathelement location="${lib.dir}/slf4j-api-${slf4j-api.version}.jar" />
         <pathelement location="${lib.dir}/commons-cli-${commons-cli.version}.jar" />
         <pathelement location="${lib.dir}/guava-${guava.version}.jar" />
         <pathelement location="${lib.dir}/netty-${netty.version}.jar" />
-        <pathelement location="${lib.dir}/metrics-core-${yammer.version}.jar" />
-        <pathelement location="${lib.dir}/jackson-core-asl-${jackson-core.version}.jar" />
-        <pathelement location="${lib.dir}/jackson-mapper-asl-${jackson-mapper.version}.jar" />
+        <pathelement location="${lib.dir}/metrics-core-${metrics-core}.jar" />
+        <pathelement location="${lib.dir}/jackson-core-asl-${jackson-core-asl.version}.jar" />
+        <pathelement location="${lib.dir}/jackson-mapper-asl-${jackson-mapper-asl.version}.jar" />
         <pathelement location="${lib.dir}/libthrift-${libthrift.version}.jar" />
 		<pathelement location="${lib.dir}/pircbot-${pircbot.version}.jar" />
 	</path>
+	
+	<target name="yank">
+        <mkdir dir="${lib.dir}" />
+        <yank:yank yankFile="${basedir}/yank.xls" destination="${lib.dir}" source="true">
+            <server url="http://repo1.maven.org/maven2" />
+            <generateVersions propertyFileName="${basedir}/version.properties" />
+        </yank:yank>
+    </target>
 
-	<target name="-init" description="prepares repository for a build">
+	<target name="-init" depends="yank" description="prepares repository for a build">
 		<mkdir dir="${classes.dir}" />
 		<mkdir dir="${javadoc.dir}" />
 		<mkdir dir="${lib.dir}" />
 	</target>
 
-	<target name="compile" depends="-init, pullall" description="compiles java files">
+	<target name="compile" depends="-init" description="compiles java files">
 		<javac srcdir="${src.dir}" destdir="${classes.dir}" source="${javac.source}"
 			target="${javac.target}" deprecation="${javac.deprecation}" debug="${javac.debug}"
 			includeantruntime="false">
@@ -158,7 +101,7 @@
 				<include name="**/*.class" />
 			</fileset>
 			<manifest>
-				<attribute name="roomstore-version" value="${roomstore.version}" />
+				<attribute name="roomstore.version" value="${roomstore.version}" />
                 <attribute name="Main-Class" value="com.mebigfatguy.roomstore.RoomStore"/>
 				<attribute name="Application-Name" value="RoomStore" />
                 <attribute name="Permissions" value="all-permissions" />
@@ -166,7 +109,7 @@
 				<attribute name="Bundle-ManifestVersion" value="2" />
 				<attribute name="Bundle-Name" value="roomstore plugin" />
 				<attribute name="Bundle-SymbolicName" value="roomstore; singleton:=true" />
-				<attribute name="Bundle-Version" value="${roomstore.version}" />
+				<attribute name="Bundle.version" value="${roomstore.version}" />
 				<attribute name="Bundle-ClassPath" value="." />
 				<attribute name="Bundle-Vendor" value="roomstore project" />
 				<attribute name="Bundle-ActivationPolicy" value="lazy" />
