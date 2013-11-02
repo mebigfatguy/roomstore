@@ -4,4 +4,6 @@ lib
 *.zip
 *~
 *.*~
+version.properties
+.~lock.yank.*
 
