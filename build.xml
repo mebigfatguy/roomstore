@@ -38,7 +38,7 @@
         <pathelement location="${lib.dir}/commons-cli-${commons-cli.version}.jar" />
         <pathelement location="${lib.dir}/guava-${guava.version}.jar" />
         <pathelement location="${lib.dir}/netty-${netty.version}.jar" />
-        <pathelement location="${lib.dir}/metrics-core-${metrics-core}.jar" />
+        <pathelement location="${lib.dir}/metrics-core-${metrics-core.version}.jar" />
         <pathelement location="${lib.dir}/jackson-core-asl-${jackson-core-asl.version}.jar" />
         <pathelement location="${lib.dir}/jackson-mapper-asl-${jackson-mapper-asl.version}.jar" />
         <pathelement location="${lib.dir}/libthrift-${libthrift.version}.jar" />
