@@ -8,7 +8,7 @@
 	KIND, either express or implied. * See the License for the specific language 
 	governing permissions and limitations * under the License. */ -->
 
-<project name="roomstore" default="info" xmlns:yank="antlib:com.mebigfatguy.yank">
+<project name="roomstore" default="info">
 	<property file="build.properties"/>
 	<property file="version.properties" />
 
@@ -53,7 +53,7 @@
         <echo message="    http://search.maven.org/#artifactdetails%7Ccom.mebigfatguy.yank%7Cyank%7C0.4.2%7Cjar"/>
     </target>
     
-	<target name="yank">
+	<target name="yank" xmlns:yank="antlib:com.mebigfatguy.yank">
         <mkdir dir="${lib.dir}" />
         <yank:yank yankFile="${basedir}/yank.xls" destination="${lib.dir}" source="true">
             <server url="http://repo1.maven.org/maven2" />
