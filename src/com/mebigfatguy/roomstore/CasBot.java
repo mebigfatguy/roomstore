@@ -96,7 +96,7 @@ class CasBot extends PircBot {
                     return;
                 }
             }
-            ircConnector.writer.addMessage(channel, sender, hostname, message);
+            ircConnector.writer.addMessage(channel, sender, message);
 
         } catch (Exception e) {
             IRCConnector.LOGGER.error(String.format("Failed processing message on channel %s for user %s - %s", channel, sender, message));

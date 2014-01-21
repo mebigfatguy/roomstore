@@ -50,7 +50,7 @@ public class CassandraWriter {
         setUpStatements();
     }
 
-    public void addMessage(String channel, String sender, String hostname, String message) throws Exception {
+    public void addMessage(String channel, String sender, String message) throws Exception {
 
         Calendar dayCal = Calendar.getInstance();
         Date dateTime = dayCal.getTime();
