@@ -8,11 +8,11 @@
 	<classpathentry kind="lib" path="lib/jackson-core-asl-1.9.13.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-mapper-asl-1.9.13.jar"/>
 	<classpathentry kind="lib" path="lib/libthrift-0.9.1.jar"/>
-	<classpathentry kind="lib" path="lib/cassandra-driver-core-1.0.5.jar"/>
-	<classpathentry kind="lib" path="lib/cassandra-all-1.2.15.jar"/>
 	<classpathentry kind="lib" path="lib/guava-16.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/netty-3.2.10.Final.jar"/>
 	<classpathentry kind="lib" path="lib/snappy-java-1.1.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.6.jar"/>
+	<classpathentry kind="lib" path="lib/cassandra-all-1.2.16.jar"/>
+	<classpathentry kind="lib" path="lib/cassandra-driver-core-1.0.6.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
