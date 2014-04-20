@@ -73,7 +73,7 @@ public class RoomStore {
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 public void run() {
                     connector.stopRecording();
-                    session.shutdown();
+                    session.close();
                 }
             }));
 
