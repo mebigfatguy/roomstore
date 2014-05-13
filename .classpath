@@ -14,5 +14,5 @@
 	<classpathentry kind="lib" path="lib/metrics-core-3.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/netty-3.9.0.Final.jar"/>
 	<classpathentry kind="lib" path="lib/guava-17.0.jar"/>
-	<classpathentry kind="output" path="classes"/>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

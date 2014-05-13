@@ -22,9 +22,10 @@
 	<property file="version.properties" />
 
 	<property name="src.dir" value="${basedir}/src" />
-	<property name="classes.dir" value="${basedir}/classes" />
+	<property name="target.dir" value="${basedir}/target" />
+	<property name="classes.dir" value="${target.dir}/classes" />
 	<property name="lib.dir" value="${basedir}/lib" />
-	<property name="javadoc.dir" value="${basedir}/javadoc" />
+	<property name="javadoc.dir" value="${target.dir}/javadoc" />
 	<property name="javac.source" value="1.6" />
 	<property name="javac.target" value="1.6" />
 	<property name="javac.deprecation" value="on" />
@@ -33,10 +34,7 @@
 	<property name="roomstore.version" value="0.1.0" />
 
 	<target name="clean" description="removes all generated collateral">
-		<delete dir="${classes.dir}" />
-		<delete dir="${javadoc.dir}" />
-		<delete file="${basedir}/roomstore-${roomstore.version}.jar" />
-		<delete file="${basedir}/roomstore-src-${roomstore.version}.zip" />
+		<delete dir="${target.dir}" />
 	</target>
 
 	<path id="roomstore.classpath">
@@ -85,7 +83,7 @@
 	</target>
 
 	<target name="srczip" description="builds the source distribution zip file">
-		<zip destfile="${basedir}/roomstore-src-${roomstore.version}.zip"
+		<zip destfile="${target.dir}/roomstore-src-${roomstore.version}.zip"
 			basedir="${basedir}">
 			<fileset dir="${src.dir}">
 				<include name="**/*.java" />
@@ -113,7 +111,7 @@
 	</target>
 
 	<target name="jar" depends="build" description="produces the roomstore jar file">
-		<jar destfile="${basedir}/roomstore-${roomstore.version}.jar">
+		<jar destfile="${target.dir}/roomstore-${roomstore.version}.jar">
 			<fileset dir="${classes.dir}">
 				<include name="**/*.class" />
 			</fileset>

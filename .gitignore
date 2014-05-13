@@ -7,3 +7,4 @@ lib
 version.properties
 .~lock.yank.*
 
+/target
