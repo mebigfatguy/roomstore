@@ -22,10 +22,10 @@ import java.util.Date;
 
 public class Message implements Comparable<Message> {
 
-    private String channel;
-    private String sender;
-    private Date time;
-    private String message;
+    private final String channel;
+    private final String sender;
+    private final Date time;
+    private final String message;
 
     public Message(String msgChannel, String msgSender, Date msgTime, String msgMessage) {
         channel = msgChannel;
@@ -50,11 +50,13 @@ public class Message implements Comparable<Message> {
         return message;
     }
     
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return channel.hashCode() ^ sender.hashCode() ^ time.hashCode() ^ message.hashCode();
     }
     
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         if (!(o instanceof Message)) {
             return false;
         }
