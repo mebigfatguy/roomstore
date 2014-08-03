@@ -20,8 +20,8 @@ package com.mebigfatguy.roomstore;
 
 public class Pair<K, V> {
     
-    private K key;
-    private V value;
+    private final K key;
+    private final V value;
     
     public Pair(K k, V v) {
         key = k;
@@ -36,11 +36,13 @@ public class Pair<K, V> {
         return value;
     }
     
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return key.hashCode();
     }
     
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         if (!(o instanceof Pair)) {
             return false;
         }
@@ -50,7 +52,8 @@ public class Pair<K, V> {
         return key.equals(that.key);
     }
     
-    public String toString() {
+    @Override
+	public String toString() {
         return "Pair[" + key + ", " + value + "]";
     }
 }

@@ -30,7 +30,7 @@ import org.jibble.pircbot.PircBot;
 
 class CasBot extends PircBot {
     private final IRCConnector ircConnector;
-    private MessagePoster messagePoster;
+    private final MessagePoster messagePoster;
 
     public CasBot(IRCConnector con, MessagePoster poster, String nick) {
         ircConnector = con;
@@ -45,7 +45,8 @@ class CasBot extends PircBot {
         super.setName(nick);
     }
 
-    public void onMessage(String channel, String sender, String login, String hostname, String message) {
+    @Override
+	public void onMessage(String channel, String sender, String login, String hostname, String message) {
         try {
             String[] msgParts = message.split("\\s+");
             if (msgParts.length >= 2) {
@@ -112,7 +113,8 @@ class CasBot extends PircBot {
     @Override
     protected void onDisconnect() {
         Thread t = new Thread(new Runnable() {
-            public void run() {
+            @Override
+			public void run() {
                 long sleepTime = 2000;
                 while (!Thread.interrupted()) {
                     try {
