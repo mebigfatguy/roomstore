@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import com.datastax.driver.core.LocalDate;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -32,7 +33,7 @@ import com.datastax.driver.core.exceptions.AlreadyExistsException;
 public class CassandraWriter {
 
     private static final String TOTAL_COUNTER = ":TOTAL:";
-    
+
     private Session session;
     private PreparedStatement addMessagePS;
     private PreparedStatement setLastAccessPS;
@@ -54,16 +55,16 @@ public class CassandraWriter {
 
         Calendar dayCal = Calendar.getInstance();
         Date dateTime = dayCal.getTime();
-        
+
         dayCal.set(Calendar.HOUR_OF_DAY, 0);
         dayCal.set(Calendar.MINUTE, 0);
         dayCal.set(Calendar.SECOND, 0);
         dayCal.set(Calendar.MILLISECOND, 0);
         Date day = dayCal.getTime();
-        
+
         session.execute(addMessagePS.bind(day, channel, dateTime, sender, message));
         session.execute(setLastAccessPS.bind(sender, channel, day, dateTime));
-        
+
         long total = 0;
         for (String word : message.split("\\s+|\\.|\\,|\\?|\\:|/")) {
             if (word.length() > 0) {
@@ -73,108 +74,113 @@ public class CassandraWriter {
                 session.execute(incrementCounterPS.bind(1L, String.valueOf(word.charAt(0)), word));
             }
         }
-        
-        if (total > 0) 
+
+        if (total > 0) {
             session.execute(incrementCounterPS.bind(total, TOTAL_COUNTER, TOTAL_COUNTER));
+        }
     }
 
     public Message getLastMessage(String channel, String sender) throws Exception {
 
         ResultSet rs = session.execute(getLastAccessPS.bind(sender, channel));
-        
+
         if (!rs.isExhausted()) {
             Row row = rs.one();
-            Date day = row.getDate("last_seen_day");
-            Date dateTime = row.getDate("last_seen_date_time");
-            
+            LocalDate day = row.getDate("last_seen_day");
+            LocalDate dateTime = row.getDate("last_seen_date_time");
+
             rs = session.execute(getMessagePS.bind(day, channel, dateTime, sender));
             if (!rs.isExhausted()) {
                 row = rs.one();
                 return new Message(channel, sender, dateTime, row.getString("message"));
             }
         }
-        
+
         return null;
     }
-    
+
     public List<Message> getMessages(String channel, Date day) {
-        
+
         List<Message> messages = new ArrayList<Message>();
         ResultSet rs = session.execute(getMessagesOnDatePS.bind(day, channel));
         for (Row row : rs) {
             Message m = new Message(channel, row.getString("user"), row.getDate("date_time"), row.getString("message"));
             messages.add(0, m);
         }
-        
-        return messages; 
+
+        return messages;
     }
-    
-    public Message getSpecificMessage(Date day, String channel, Date date_time) {
+
+    public Message getSpecificMessage(Date day, String channel, LocalDate date_time) {
         ResultSet rs = session.execute(getSpecificMessagePS.bind(day, channel, date_time));
         if (!rs.isExhausted()) {
             Row row = rs.one();
-            return new Message(channel, row.getString("user"), date_time, row.getString("message"));        
+            return new Message(channel, row.getString("user"), date_time, row.getString("message"));
         }
-        
+
         return null;
     }
-    
+
     public List<Message> getTopicMessages(String channel, String word) {
         Calendar cal = Calendar.getInstance();
         List<Message> messages = new ArrayList<Message>();
         ResultSet rs = session.execute(getTopicEntriesPS.bind(channel, word));
         for (Row row : rs) {
-            Date date_time = row.getDate("date_time");
-            
-            cal.setTime(date_time);
+            LocalDate date_time = row.getDate("date_time");
+
+            cal.setTime(new Date(date_time.getMillisSinceEpoch()));
             cal.set(Calendar.HOUR_OF_DAY, 0);
             cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0);
             cal.set(Calendar.MILLISECOND, 0);
-            
+
             Date day = cal.getTime();
-            
+
             Message m = getSpecificMessage(day, channel, date_time);
             if (m != null) {
                 messages.add(m);
             }
         }
-        
+
         return messages;
     }
 
     private void setUpSchema(int replicationFactor) throws Exception {
-        
+
         try {
-            session.execute(String.format("CREATE KEYSPACE roomstore WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : %d }", replicationFactor));
+            session.execute(
+                    String.format("CREATE KEYSPACE roomstore WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : %d }", replicationFactor));
         } catch (AlreadyExistsException aee) {
         } finally {
             session.execute("use roomstore");
         }
 
         try {
-            session.execute("CREATE TABLE roomstore.messages (day timestamp, channel text, date_time timestamp, user text, message text, primary key(day, channel, date_time, user)) with compact storage and clustering order by (channel desc, date_time desc)");
+            session.execute(
+                    "CREATE TABLE roomstore.messages (day timestamp, channel text, date_time timestamp, user text, message text, primary key(day, channel, date_time, user)) with compact storage and clustering order by (channel desc, date_time desc)");
         } catch (AlreadyExistsException aee) {
         }
-        
+
         try {
-            session.execute("CREATE TABLE roomstore.users (user text, channel text, last_seen_day timestamp, last_seen_date_time timestamp, primary key(user, channel))");
+            session.execute(
+                    "CREATE TABLE roomstore.users (user text, channel text, last_seen_day timestamp, last_seen_date_time timestamp, primary key(user, channel))");
         } catch (AlreadyExistsException aee) {
         }
-        
+
         try {
-            session.execute("CREATE TABLE roomstore.topics (channel text, word text, date_time timestamp, user text, primary key(channel, word, date_time)) with compact storage and clustering order by (word asc, date_time desc)");
+            session.execute(
+                    "CREATE TABLE roomstore.topics (channel text, word text, date_time timestamp, user text, primary key(channel, word, date_time)) with compact storage and clustering order by (word asc, date_time desc)");
         } catch (AlreadyExistsException aee) {
         }
-        
+
         try {
             session.execute("CREATE TABLE roomstore.topic_counters (prefix text, word text, count counter, primary key (prefix, word))");
         } catch (AlreadyExistsException aee) {
         }
     }
-    
+
     private void setUpStatements() throws Exception {
-        
+
         addMessagePS = session.prepare("insert into roomstore.messages (day, channel, date_time, user, message) values (?,?,?,?,?)");
         setLastAccessPS = session.prepare("insert into roomstore.users (user, channel, last_seen_day, last_seen_date_time) values (?,?,?,?)");
         addTopicPS = session.prepare("insert into roomstore.topics (channel, word, date_time, user) values (?, ?, ?, ?)");

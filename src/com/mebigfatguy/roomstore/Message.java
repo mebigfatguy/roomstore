@@ -18,16 +18,16 @@
  */
 package com.mebigfatguy.roomstore;
 
-import java.util.Date;
+import com.datastax.driver.core.LocalDate;
 
 public class Message implements Comparable<Message> {
 
     private final String channel;
     private final String sender;
-    private final Date time;
+    private final LocalDate time;
     private final String message;
 
-    public Message(String msgChannel, String msgSender, Date msgTime, String msgMessage) {
+    public Message(String msgChannel, String msgSender, LocalDate msgTime, String msgMessage) {
         channel = msgChannel;
         sender = msgSender;
         time = msgTime;
@@ -42,27 +42,27 @@ public class Message implements Comparable<Message> {
         return sender;
     }
 
-    public Date getTime() {
+    public LocalDate getTime() {
         return time;
     }
 
     public String getMessage() {
         return message;
     }
-    
+
     @Override
-	public int hashCode() {
+    public int hashCode() {
         return channel.hashCode() ^ sender.hashCode() ^ time.hashCode() ^ message.hashCode();
     }
-    
+
     @Override
-	public boolean equals(Object o) {
+    public boolean equals(Object o) {
         if (!(o instanceof Message)) {
             return false;
         }
-        
+
         Message that = (Message) o;
-        
+
         return channel.equals(that.channel) && sender.equals(that.sender) && time.equals(that.time) && message.equals(that.message);
     }
 
@@ -72,17 +72,17 @@ public class Message implements Comparable<Message> {
         if (cmp != 0) {
             return cmp;
         }
-        
-        cmp = time.compareTo(that.time);
+
+        cmp = time.getDaysSinceEpoch() - that.time.getDaysSinceEpoch();
         if (cmp != 0) {
             return cmp;
         }
-          
+
         cmp = sender.compareTo(that.sender);
         if (cmp != 0) {
             return cmp;
         }
-        
-        return message.compareTo(that.message); 
-    } 
+
+        return message.compareTo(that.message);
+    }
 }
