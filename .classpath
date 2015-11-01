@@ -12,7 +12,7 @@
 	<classpathentry kind="lib" path="lib/guava-18.0.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.7.12.jar"/>
 	<classpathentry kind="lib" path="lib/cassandra-all-2.2.0.jar"/>
-	<classpathentry kind="lib" path="lib/cassandra-driver-core-2.2.0-rc2.jar"/>
 	<classpathentry kind="lib" path="lib/snappy-java-1.1.1.7.jar"/>
+	<classpathentry kind="lib" path="lib/cassandra-driver-core-2.2.0-rc3.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
