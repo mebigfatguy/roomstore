@@ -17,7 +17,7 @@
   */ 
 -->
 
-<project name="roomstore" default="info">
+<project name="roomstore" default="jar_with_info">
 	<property file="build.properties"/>
 	<property file="version.properties" />
 
@@ -131,6 +131,8 @@
 			</manifest>
 		</jar>
 	</target>
+	
+	<target name="jar_with_info" depends="info, jar"/>
 
 	<target name="release" depends="build, srczip, javadoc"
 		description="prepares everything for a release" />
