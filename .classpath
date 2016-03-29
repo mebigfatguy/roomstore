@@ -6,7 +6,6 @@
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/libthrift-0.9.1.jar"/>
 	<classpathentry kind="lib" path="lib/guava-18.0.jar"/>
-	<classpathentry kind="lib" path="lib/slf4j-api-1.7.12.jar"/>
 	<classpathentry kind="lib" path="lib/snappy-java-1.1.1.7.jar"/>
 	<classpathentry kind="lib" path="lib/cassandra-driver-core-2.2.0-rc3.jar"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.2-sources.jar"/>
@@ -14,5 +13,6 @@
 	<classpathentry kind="lib" path="lib/jackson-mapper-asl-1.9.2.jar"/>
 	<classpathentry kind="lib" path="lib/metrics-core-3.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/netty-all-4.0.23.Final.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.7.19.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
