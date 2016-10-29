@@ -20,7 +20,7 @@ package com.mebigfatguy.roomstore;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -41,18 +41,18 @@ public class RoomStore {
         Options options = createOptions();
 
         try {
-            CommandLineParser parser = new GnuParser();
+            CommandLineParser parser = new DefaultParser();
             CommandLine cmdLine = parser.parse(options, args);
             String nickname = cmdLine.getOptionValue(NICK_NAME);
             String server = cmdLine.getOptionValue(IRCSERVER);
             String[] channels = cmdLine.getOptionValues(CHANNELS);
             String[] endPoints = cmdLine.getOptionValues(ENDPOINTS);
             String rf = cmdLine.getOptionValue(RF);
-            
+
             if ((endPoints == null) || (endPoints.length == 0)) {
                 endPoints = new String[] { "127.0.0.1" };
             }
-            
+
             int replicationFactor;
             try {
                 replicationFactor = Integer.parseInt(rf);
@@ -64,7 +64,7 @@ public class RoomStore {
 
             Cluster cluster = new Cluster.Builder().addContactPoints(endPoints).build();
             final Session session = cluster.connect();
-            
+
             CassandraWriter writer = new CassandraWriter(session, replicationFactor);
             connector.setWriter(writer);
 
@@ -72,17 +72,17 @@ public class RoomStore {
 
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 @Override
-				public void run() {
+                public void run() {
                     connector.stopRecording();
                     session.close();
                 }
             }));
 
         } catch (ParseException pe) {
-	    System.out.println("Parse Error on command line options:");
-	    System.out.println(commandLineRepresentation(args));
+            System.out.println("Parse Error on command line options:");
+            System.out.println(commandLineRepresentation(args));
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp( "roomstore", options );
+            formatter.printHelp("roomstore", options);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -109,7 +109,7 @@ public class RoomStore {
         option.setRequired(false);
         option.setArgs(100);
         options.addOption(option);
-        
+
         option = new Option(RF, true, "replication factor[default=1]");
         option.setRequired(false);
         options.addOption(option);
@@ -125,7 +125,7 @@ public class RoomStore {
             space = " ";
             sb.append(arg);
         }
-        
+
         return sb.toString();
     }
 }
