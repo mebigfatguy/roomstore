@@ -117,7 +117,7 @@ public class RoomStore {
         return options;
     }
 
-    private static String commandLineRepresentation(String[] args) {
+    private static String commandLineRepresentation(String...args) {
         StringBuilder sb = new StringBuilder();
         String space = "Roomstore ";
         for (String arg : args) {
