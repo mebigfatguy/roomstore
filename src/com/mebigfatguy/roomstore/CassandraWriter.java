@@ -45,13 +45,13 @@ public class CassandraWriter {
     private PreparedStatement getSpecificMessagePS;
     private PreparedStatement incrementCounterPS;
 
-    public CassandraWriter(Session s, int replicationFactor) throws Exception {
+    public CassandraWriter(Session s, int replicationFactor) {
         session = s;
         setUpSchema(replicationFactor);
         setUpStatements();
     }
 
-    public void addMessage(String channel, String sender, String message) throws Exception {
+    public void addMessage(String channel, String sender, String message) {
 
         Calendar dayCal = Calendar.getInstance();
         Date dateTime = dayCal.getTime();
@@ -80,7 +80,7 @@ public class CassandraWriter {
         }
     }
 
-    public Message getLastMessage(String channel, String sender) throws Exception {
+    public Message getLastMessage(String channel, String sender) {
 
         ResultSet rs = session.execute(getLastAccessPS.bind(sender, channel));
 
@@ -145,7 +145,7 @@ public class CassandraWriter {
         return messages;
     }
 
-    private void setUpSchema(int replicationFactor) throws Exception {
+    private void setUpSchema(int replicationFactor) {
 
         try {
             session.execute(
@@ -179,7 +179,7 @@ public class CassandraWriter {
         }
     }
 
-    private void setUpStatements() throws Exception {
+    private void setUpStatements() {
 
         addMessagePS = session.prepare("insert into roomstore.messages (day, channel, date_time, user, message) values (?,?,?,?,?)");
         setLastAccessPS = session.prepare("insert into roomstore.users (user, channel, last_seen_day, last_seen_date_time) values (?,?,?,?)");
