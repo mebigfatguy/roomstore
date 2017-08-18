@@ -84,24 +84,24 @@ public class CassandraWriter {
 
         ResultSet rs = session.execute(getLastAccessPS.bind(sender, channel));
 
-        if (!rs.isExhausted()) {
-            Row row = rs.one();
-            LocalDate day = row.getDate("last_seen_day");
-            LocalDate dateTime = row.getDate("last_seen_date_time");
-
-            rs = session.execute(getMessagePS.bind(day, channel, dateTime, sender));
-            if (!rs.isExhausted()) {
-                row = rs.one();
-                return new Message(channel, sender, dateTime, row.getString("message"));
-            }
+        if (rs.isExhausted()) {
+            return null;
         }
 
-        return null;
+        Row row = rs.one();
+        LocalDate day = row.getDate("last_seen_day");
+        LocalDate dateTime = row.getDate("last_seen_date_time");
+
+        rs = session.execute(getMessagePS.bind(day, channel, dateTime, sender));
+        if (!rs.isExhausted()) {
+            row = rs.one();
+            return new Message(channel, sender, dateTime, row.getString("message"));
+        }
     }
 
     public List<Message> getMessages(String channel, Date day) {
 
-        List<Message> messages = new ArrayList<Message>();
+        List<Message> messages = new ArrayList<>();
         ResultSet rs = session.execute(getMessagesOnDatePS.bind(day, channel));
         for (Row row : rs) {
             Message m = new Message(channel, row.getString("user"), row.getDate("date_time"), row.getString("message"));
@@ -123,7 +123,7 @@ public class CassandraWriter {
 
     public List<Message> getTopicMessages(String channel, String word) {
         Calendar cal = Calendar.getInstance();
-        List<Message> messages = new ArrayList<Message>();
+        List<Message> messages = new ArrayList<>();
         ResultSet rs = session.execute(getTopicEntriesPS.bind(channel, word));
         for (Row row : rs) {
             LocalDate date_time = row.getDate("date_time");
