@@ -97,6 +97,8 @@ public class CassandraWriter {
             row = rs.one();
             return new Message(channel, sender, dateTime, row.getString("message"));
         }
+
+        return null;
     }
 
     public List<Message> getMessages(String channel, Date day) {
