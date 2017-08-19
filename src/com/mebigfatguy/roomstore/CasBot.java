@@ -46,7 +46,7 @@ class CasBot extends PircBot {
     }
 
     @Override
-	public void onMessage(String channel, String sender, String login, String hostname, String message) {
+    public void onMessage(String channel, String sender, String login, String hostname, String message) {
         try {
             String[] msgParts = message.split("\\s+");
             if (msgParts.length >= 2) {
@@ -59,24 +59,25 @@ class CasBot extends PircBot {
                         response.append("~ today                 -- see messages from today\n");
                         response.append("~ date MM/yy/dddd       -- see messages from date\n");
                         response.append("~ topic {word} ...      -- see messages that talk about the words specified\n");
-                        messagePoster.post(sender,  response.toString());
+                        messagePoster.post(sender, response.toString());
                     } else if ((msgParts.length >= 3) && "seen".equalsIgnoreCase(msgParts[1])) {
                         String user = msgParts[2].trim();
-                        Message msg = ircConnector.writer.getLastMessage(channel,  user);
+                        Message msg = ircConnector.writer.getLastMessage(channel, user);
                         if (msg != null) {
-                            messagePoster.post(sender,  user + " last seen " + DateFormat.getInstance().format(msg.getTime()) + " saying: " + msg.getMessage());
+                            messagePoster.post(sender, user + " last seen " + DateFormat.getInstance().format(msg.getTime()) + " saying: " + msg.getMessage());
                         }
                     } else if ((msgParts.length >= 3) && "topic".equalsIgnoreCase(msgParts[1])) {
                         String word = msgParts[2].trim().toLowerCase();
-                        Set<Message> intersectionMessages = new TreeSet<Message>(ircConnector.writer.getTopicMessages(channel, word));
-                        
+                        Set<Message> intersectionMessages = new TreeSet<>(ircConnector.writer.getTopicMessages(channel, word));
+
                         for (int i = 3; i < msgParts.length; ++i) {
                             word = msgParts[i].trim().toLowerCase();
                             List<Message> messages = ircConnector.writer.getTopicMessages(channel, word);
                             intersectionMessages.retainAll(messages);
                         }
                         for (Message msg : intersectionMessages) {
-                            messagePoster.post(msg.getSender(), msg.getSender() + " @ " + DateFormat.getInstance().format(msg.getTime()) + " said: " + msg.getMessage());
+                            messagePoster.post(msg.getSender(),
+                                    msg.getSender() + " @ " + DateFormat.getInstance().format(msg.getTime()) + " said: " + msg.getMessage());
                         }
                     } else if ("today".equalsIgnoreCase(msgParts[1])) {
                         Calendar dayCal = Calendar.getInstance();
@@ -84,13 +85,13 @@ class CasBot extends PircBot {
                         dayCal.set(Calendar.MINUTE, 0);
                         dayCal.set(Calendar.SECOND, 0);
                         dayCal.set(Calendar.MILLISECOND, 0);
-                        
+
                         List<Message> msgs = ircConnector.writer.getMessages(channel, dayCal.getTime());
                         sendMessageList(sender, msgs);
                     } else if ((msgParts.length >= 3) && "date".equalsIgnoreCase(msgParts[1])) {
                         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
                         Date day = sdf.parse(msgParts[2]);
-                        
+
                         List<Message> msgs = ircConnector.writer.getMessages(channel, day);
                         sendMessageList(sender, msgs);
                     }
@@ -100,10 +101,10 @@ class CasBot extends PircBot {
             ircConnector.writer.addMessage(channel, sender, message);
 
         } catch (Exception e) {
-            IRCConnector.LOGGER.error(String.format("Failed processing message on channel %s for user %s - %s", channel, sender, message));
+            IRCConnector.LOGGER.error("Failed processing message on channel {} for user {} - {}", channel, sender, message);
         }
     }
-    
+
     public void sendMessageList(String sender, List<Message> msgs) {
         for (Message m : msgs) {
             messagePoster.post(sender, m.getSender() + ": " + DateFormat.getInstance().format(m.getTime()) + ": " + m.getMessage() + "\n");
@@ -114,7 +115,7 @@ class CasBot extends PircBot {
     protected void onDisconnect() {
         Thread t = new Thread(new Runnable() {
             @Override
-			public void run() {
+            public void run() {
                 long sleepTime = 2000;
                 while (!Thread.interrupted()) {
                     try {
