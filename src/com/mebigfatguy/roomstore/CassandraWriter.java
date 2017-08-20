@@ -115,12 +115,12 @@ public class CassandraWriter {
 
     public Message getSpecificMessage(Date day, String channel, LocalDate date_time) {
         ResultSet rs = session.execute(getSpecificMessagePS.bind(day, channel, date_time));
-        if (!rs.isExhausted()) {
-            Row row = rs.one();
-            return new Message(channel, row.getString("user"), date_time, row.getString("message"));
+        if (rs.isExhausted()) {
+            return null;
         }
 
-        return null;
+        Row row = rs.one();
+        return new Message(channel, row.getString("user"), date_time, row.getString("message"));
     }
 
     public List<Message> getTopicMessages(String channel, String word) {
