@@ -3,7 +3,7 @@
   <AuxClasspathEntry>./lib/cassandra-all-2.2.9.jar</AuxClasspathEntry>
   <AuxClasspathEntry>./lib/cassandra-driver-core-2.2.0-rc3.jar</AuxClasspathEntry>
   <AuxClasspathEntry>./lib/commons-cli-1.3.1.jar</AuxClasspathEntry>
-  <AuxClasspathEntry>./lib/guava-21.0.jar</AuxClasspathEntry>
+  <AuxClasspathEntry>./lib/guava-22.0.jar</AuxClasspathEntry>
   <AuxClasspathEntry>./lib/jackson-core-asl-1.9.2.jar</AuxClasspathEntry>
   <AuxClasspathEntry>./lib/jackson-mapper-asl-1.9.2.jar</AuxClasspathEntry>
   <AuxClasspathEntry>./lib/libthrift-0.9.1.jar</AuxClasspathEntry>
